@@ -10,7 +10,7 @@ const app = express();
 const BOT_TOKEN = 'ВСТАВЬТЕ_ВАШ_ТОКЕН_ЗДЕСЬ';
 
 // URL вашего калькулятора (пока оставьте как есть, изменим позже)
-const WEB_APP_URL = 'https://ваш-сайт.com';
+const WEB_APP_URL = 'https://andersen-123.github.io/potolok-calculator/';
 
 const bot = new Telegraf(BOT_TOKEN);
 
