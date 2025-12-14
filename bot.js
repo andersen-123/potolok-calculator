@@ -1,187 +1,1951 @@
-// УСТАНОВИТЕ ПЕРЕД ИСПОЛЬЗОВАНИЕМ:
-// 1. Установите Node.js с сайта: https://nodejs.org
-// 2. В командной строке выполните: npm install telegraf express
-
-const { Telegraf, Markup } = require('telegraf');
-const express = require('express');
-const app = express();
-
-// ВАШ ТОКЕН ОТ @BotFather
-const BOT_TOKEN = '1095203814:AAGMIweg9YJDPQqCmCMgWTDBI_BBmbFhLj8';
-
-// URL вашего калькулятора (пока оставьте как есть, изменим позже)
-const WEB_APP_URL = 'https://andersen-123.github.io/potolok-calculator/';
-
-const bot = new Telegraf(BOT_TOKEN);
-
-// Приветственное сообщение
-bot.start((ctx) => {
-    ctx.reply(
-        `🏠 Добро пожаловать в PotolokForLife! 🏠\n\n` +
-        `Я помогу рассчитать стоимость натяжного потолка.\n\n` +
-        `Нажмите кнопку ниже, чтобы открыть калькулятор:`,
-        Markup.keyboard([
-            ['🧮 Рассчитать стоимость'],
-            ['📞 Контакты', 'ℹ️ О компании']
-        ]).resize()
-    );
-});
-
-// Обработка кнопки "Рассчитать стоимость"
-bot.hears('🧮 Рассчитать стоимость', (ctx) => {
-    ctx.reply(
-        'Откройте калькулятор для точного расчета стоимости:',
-        Markup.inlineKeyboard([
-            Markup.button.webApp('📱 Открыть калькулятор', `${WEB_APP_URL}/index.html`)
-        ])
-    );
-});
-
-// Обработка кнопки "Контакты"
-bot.hears('📞 Контакты', (ctx) => {
-    ctx.reply(
-        '📞 *Контакты PotolokForLife:*\n\n' +
-        'Телефон: `8(977)531-10-99`\n' +
-        'Доп. телефон: `8(977)709-38-43`\n' +
-        'Email: `Potolokforlife@yandex.ru`\n\n' +
-        '📍 Адрес: Пушкино\n\n' +
-        '⏰ Режим работы:\n' +
-        'Пн-Пт: 9:00 - 20:00\n' +
-        'Сб-Вс: 10:00 - 18:00',
-        { parse_mode: 'Markdown' }
-    );
-});
-
-// Обработка кнопки "О компании"
-bot.hears('ℹ️ О компании', (ctx) => {
-    ctx.reply(
-        '🏢 *PotolokForLife - Натяжные потолки на всю жизнь*\n\n' +
-        'Мы специализируемся на установке натяжных потолков:\n\n' +
-        '✅ Гарпунная система\n' +
-        '✅ Гарантия на материалы и работу\n' +
-        '✅ Бесплатный замер\n' +
-        '✅ Быстрый монтаж\n' +
-        '✅ Опытные мастера\n\n' +
-        'Работаем в Москве и области.',
-        { parse_mode: 'Markdown' }
-    );
-});
-
-// Обработка данных из калькулятора
-bot.on('web_app_data', (ctx) => {
-    try {
-        const data = JSON.parse(ctx.webAppData.data);
-
-        if (data.type === 'estimate') {
-            // Сохраняем информацию о запросе
-            const estimateMessage =
-            `🔔 *Новый расчет стоимости!*\n\n` +
-            `👤 Пользователь: @${ctx.from.username || 'без username'}\n` +
-            `🆔 ID: ${ctx.from.id}\n` +
-            `📐 Площадь: ${data.area} м²\n` +
-            `🏠 Помещений: ${data.rooms}\n` +
-            `💰 Стоимость: ${data.total}\n\n` +
-            `📅 ${new Date().toLocaleString('ru-RU')}`;
-
-            // Отправляем себе уведомление (ваш ID)
-            ctx.telegram.sendMessage('ВАШ_ID_В_TELEGRAM', estimateMessage, {
-                parse_mode: 'Markdown'
-            });
-
-            // Отправляем подтверждение пользователю
-            ctx.reply(
-                '✅ *Смета успешно отправлена!*\n\n' +
-                'Наш менеджер свяжется с вами в течение 30 минут для уточнения деталей.\n\n' +
-                'А пока вы можете:\n' +
-                '• Уточнить детали по телефону 8(977)531-10-99\n' +
-                '• Запросить бесплатный замер\n' +
-                '• Рассчитать другой вариант',
-                { parse_mode: 'Markdown' }
-            );
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PotolokForLife - Калькулятор натяжных потолков</title>
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --accent-color: #3a6bc9;
+            --light-color: #f5f7fa;
+            --dark-color: #333;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --telegram-color: #0088cc;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
         }
-    } catch (error) {
-        console.error('Ошибка:', error);
-        ctx.reply('Произошла ошибка при обработке данных.');
-    }
-});
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.5;
+            overflow-x: hidden;
+            padding: 0;
+            padding-bottom: 80px; /* Место для кнопок внизу */
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 15px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ffd700, #ffed4e);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .logo h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        
+        .logo p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .contact-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Mobile Navigation */
+        .mobile-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 10px;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 5px;
+            border: none;
+            background: none;
+            font-weight: 600;
+            color: #666;
+            border-radius: 8px;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+        
+        .nav-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+        
+        .card:active {
+            transform: scale(0.98);
+        }
+        
+        .card-title {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card-title i {
+            font-size: 1.1rem;
+        }
+        
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 0.95rem;
+        }
+        
+        .input-group input, 
+        .input-group select,
+        .input-group textarea {
+            width: 100%;
+            padding: 14px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: #f9f9f9;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .input-group input:focus, 
+        .input-group select:focus,
+        .input-group textarea:focus {
+            border-color: var(--accent-color);
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(58, 107, 201, 0.1);
+        }
+        
+        /* Row for multiple inputs */
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .input-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        /* System Selector */
+        .system-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .system-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 15px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            text-align: center;
+        }
+        
+        .system-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        /* Services List */
+        .services-list {
+            max-height: 400px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 10px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 5px;
+        }
+        
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #f5f5f5;
+            transition: var(--transition);
+        }
+        
+        .service-item:last-child {
+            border-bottom: none;
+        }
+        
+        .service-info {
+            flex: 1;
+            padding-right: 10px;
+        }
+        
+        .service-name {
+            font-weight: 600;
+            margin-bottom: 3px;
+            font-size: 0.95rem;
+        }
+        
+        .service-unit {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .service-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .service-price {
+            font-weight: 700;
+            color: var(--primary-color);
+            min-width: 70px;
+            text-align: right;
+            font-size: 0.95rem;
+        }
+        
+        .quantity-input {
+            width: 70px;
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1rem;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        /* Results */
+        .results {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .result-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+        
+        .result-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .result-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        
+        /* Payment Info */
+        .payment-info {
+            background: #f0f7ff;
+            border-left: 5px solid var(--primary-color);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 10px;
+        }
+        
+        .payment-info h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        .payment-info ul {
+            padding-left: 20px;
+        }
+        
+        .payment-info li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+        
+        .highlight {
+            background-color: #fffacd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        /* Summary Table */
+        .summary-table-container {
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 20px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+        }
+        
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        
+        .summary-table th, 
+        .summary-table td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .summary-table th {
+            background: #f8f9fa;
+            color: var(--primary-color);
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+        }
+        
+        .total-row {
+            background: #f0f7ff;
+            font-weight: 700;
+        }
+        
+        .total-row td {
+            border-top: 2px solid var(--primary-color);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        /* Charts */
+        .chart-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--box-shadow);
+        }
+        
+        .chart-title {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        
+        /* Action Buttons - теперь внутри карточек */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .btn-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 14px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex: 1;
+        }
+        
+        .btn:active {
+            transform: scale(0.97);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .btn-primary:active {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:active {
+            background: #e0e0e0;
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-telegram {
+            background: linear-gradient(135deg, var(--telegram-color), #00aced);
+            color: white;
+        }
+        
+        /* Object Info */
+        .object-info {
+            background: #e8f4ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .object-info h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        /* Accordion for services */
+        .accordion {
+            margin-bottom: 15px;
+        }
+        
+        .accordion-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid #e9ecef;
+        }
+        
+        .accordion-content {
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            background: white;
+            display: none;
+        }
+        
+        .accordion.active .accordion-content {
+            display: block;
+        }
+        
+        /* Swipe indicator */
+        .swipe-hint {
+            text-align: center;
+            color: #666;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        /* Telegram Status */
+        .telegram-status {
+            display: none;
+            background: var(--telegram-color);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .input-row {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .system-btn {
+                min-width: 100px;
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .service-controls {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 8px;
+            }
+            
+            .quantity-input {
+                width: 60px;
+                padding: 8px;
+                font-size: 0.9rem;
+            }
+            
+            .results {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 12px 14px;
+                font-size: 0.9rem;
+            }
+            
+            .btn i {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 750px;
+            }
+            
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .logo {
+                text-align: left;
+                margin-bottom: 0;
+            }
+            
+            .contact-info {
+                text-align: right;
+            }
+        }
+        
+        /* Loading indicator */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-weight: 600;
+            display: none;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        .toast.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Floating action button for mobile */
+        .fab-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 20px rgba(30, 60, 114, 0.3);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .fab:active {
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 768px) {
+            .fab-container {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Telegram Status -->
+        <div class="telegram-status" id="telegramStatus">
+            <i class="fab fa-telegram"></i> Открыто в Telegram
+        </div>
+        
+        <header class="header">
+            <div class="logo">
+                <h1><i class="fas fa-home"></i> PotolokForLife</h1>
+                <p>Натяжные потолки на всю жизнь</p>
+            </div>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>Potolokforlife@yandex.ru</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>8(977)531-10-99</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Пушкино</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Mobile Navigation Tabs -->
+        <div class="mobile-nav">
+            <button class="nav-tab active" data-tab="parameters">
+                <i class="fas fa-ruler-combined"></i> Параметры
+            </button>
+            <button class="nav-tab" data-tab="services">
+                <i class="fas fa-tools"></i> Услуги
+            </button>
+            <button class="nav-tab" data-tab="results">
+                <i class="fas fa-calculator"></i> Расчет
+            </button>
+        </div>
+        
+        <!-- Tab 1: Parameters -->
+        <div class="tab-content active" id="parameters-tab">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-info-circle"></i> Информация об объекте</h2>
+                
+                <div class="object-info">
+                    <div class="input-group">
+                        <label>Тип объекта</label>
+                        <select id="objectType">
+                            <option value="квартира">Квартира</option>
+                            <option value="дом">Частный дом</option>
+                            <option value="офис">Офис</option>
+                            <option value="магазин">Магазин</option>
+                        </select>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Количество помещений</label>
+                        <input type="number" id="roomCount" value="1" min="1">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Адрес объекта</label>
+                        <input type="text" id="objectAddress" placeholder="Введите адрес">
+                    </div>
+                </div>
+                
+                <h2 class="card-title"><i class="fas fa-cog"></i> Система потолка</h2>
+                <div class="system-selector">
+                    <button class="system-btn active" data-system="garpun">
+                        <i class="fas fa-thumbs-up"></i> Гарпун
+                    </button>
+                    <button class="system-btn" data-system="garpun10">
+                        <i class="fas fa-star"></i> Гарпун +10%
+                    </button>
+                </div>
+                
+                <h2 class="card-title"><i class="fas fa-cube"></i> Основные параметры</h2>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label><i class="fas fa-square"></i> Площадь (S)</label>
+                        <input type="number" id="area" value="0" min="0" step="0.01" placeholder="м²">
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-ruler"></i> Периметр (P)</label>
+                        <input type="number" id="perimeter" value="0" min="0" step="0.01" placeholder="м.п.">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label><i class="fas fa-arrows-alt-v"></i> Высота (h)</label>
+                    <input type="number" id="height" value="0" min="0" step="0.01" placeholder="м">
+                </div>
+                
+                <div class="input-group">
+                    <label><i class="fas fa-palette"></i> Тип полотна</label>
+                    <select id="canvasType">
+                        <option value="msd">MSD Premium белое матовое</option>
+                        <option value="satin">Сатин белый</option>
+                        <option value="glossy">Глянцевое белое</option>
+                        <option value="color">Цветное матовое</option>
+                    </select>
+                </div>
+                
+                <!-- Кнопки теперь внутри карточки -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="calculateBtn">
+                        <i class="fas fa-calculator"></i> Рассчитать смету
+                    </button>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="resetBtn">
+                            <i class="fas fa-redo"></i> Сбросить
+                        </button>
+                        <button class="btn btn-success" id="saveBtn">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="swipe-hint">
+                <i class="fas fa-hand-point-right"></i>
+                <span>Листайте вправо для выбора услуг</span>
+            </div>
+        </div>
+        
+        <!-- Tab 2: Services -->
+        <div class="tab-content" id="services-tab">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-tools"></i> Основные работы</h2>
+                <div class="swipe-hint">
+                    <i class="fas fa-hand-point-up"></i>
+                    <span>Нажмите на категорию для раскрытия списка</span>
+                </div>
+                
+                <!-- Accordion for services -->
+                <div class="accordion active" id="basic-services">
+                    <div class="accordion-header">
+                        <span>Основные элементы потолка</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="services-list" id="basicServicesList">
+                            <!-- Basic services will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion" id="lighting-services">
+                    <div class="accordion-header">
+                        <span>Освещение и электротехника</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="services-list" id="lightingServicesList">
+                            <!-- Lighting services will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion" id="additional-services">
+                    <div class="accordion-header">
+                        <span>Дополнительные работы</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="services-list" id="additionalServicesList">
+                            <!-- Additional services will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="accordion" id="equipment-section">
+                    <div class="accordion-header">
+                        <span>Оборудование</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="services-list" id="equipmentList">
+                            <!-- Equipment will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Кнопки в карточке услуг -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="calculateBtn2">
+                        <i class="fas fa-calculator"></i> Рассчитать смету
+                    </button>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="resetBtn2">
+                            <i class="fas fa-redo"></i> Сбросить
+                        </button>
+                        <button class="btn btn-success" id="saveBtn2">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="swipe-hint">
+                <i class="fas fa-hand-point-right"></i>
+                <span>Листайте вправо для просмотра расчета</span>
+            </div>
+        </div>
+        
+        <!-- Tab 3: Results -->
+        <div class="tab-content" id="results-tab">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-calculator"></i> Сводка по стоимости</h2>
+                
+                <div class="results">
+                    <div class="result-box">
+                        <div class="result-label">Материалы</div>
+                        <div class="result-value" id="materialsCost">0 руб.</div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Работы</div>
+                        <div class="result-value" id="workCost">0 руб.</div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Оборудование</div>
+                        <div class="result-value" id="equipmentCost">0 руб.</div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Итого</div>
+                        <div class="result-value" id="totalCost">0 руб.</div>
+                    </div>
+                </div>
+                
+                <div class="payment-info">
+                    <h3><i class="fas fa-credit-card"></i> Порядок оплаты</h3>
+                    <ul>
+                        <li>Предоплата <span class="highlight" id="prepaymentAmount">0 руб.</span> (50%) за 3 дня до монтажа</li>
+                        <li>Оплата оборудования: 100% перед началом работ</li>
+                        <li>Окончательный расчет <span class="highlight" id="finalPaymentAmount">0 руб.</span> (50%) в день завершения работ</li>
+                    </ul>
+                </div>
+                
+                <h2 class="card-title"><i class="fas fa-list-alt"></i> Детализация сметы</h2>
+                <div class="summary-table-container">
+                    <table class="summary-table" id="summaryTable">
+                        <thead>
+                            <tr>
+                                <th>Наименование</th>
+                                <th>Кол-во</th>
+                                <th>Цена</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody">
+                            <tr>
+                                <td colspan="4" class="empty-state">
+                                    <i class="fas fa-clipboard-list"></i>
+                                    <p>Добавьте элементы для расчета</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Кнопки в карточке результатов -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="calculateBtn3">
+                        <i class="fas fa-calculator"></i> Пересчитать
+                    </button>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="resetBtn3">
+                            <i class="fas fa-redo"></i> Сбросить
+                        </button>
+                        <button class="btn btn-success" id="saveBtn3">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="printBtn">
+                            <i class="fas fa-print"></i> Печать
+                        </button>
+                        <button class="btn btn-telegram" id="telegramBtn">
+                            <i class="fab fa-telegram"></i> Telegram
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title"><i class="fas fa-chart-pie"></i> Распределение стоимости</div>
+                <canvas id="costDistributionChart"></canvas>
+            </div>
+            
+            <div class="swipe-hint">
+                <i class="fas fa-hand-point-left"></i>
+                <span>Листайте влево для изменения параметров</span>
+            </div>
+        </div>
+        
+        <!-- Toast Notification -->
+        <div class="toast" id="toast"></div>
+    </div>
 
-// Обработка всех сообщений
-bot.on('message', (ctx) => {
-    if (ctx.message.text && !ctx.message.text.startsWith('/')) {
-        ctx.reply(
-            'Используйте кнопки меню или команды:\n\n' +
-            '/start - Главное меню\n' +
-            '/calc - Калькулятор\n' +
-            '/contacts - Контакты\n' +
-            '/help - Помощь'
-        );
-    }
-});
+    <!-- Floating Action Button for quick access -->
+    <div class="fab-container">
+        <button class="fab" id="fabBtn">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
 
-// Команда /calc
-bot.command('calc', (ctx) => {
-    ctx.reply(
-        'Откройте калькулятор:',
-        Markup.inlineKeyboard([
-            Markup.button.webApp('🧮 Открыть калькулятор', `${WEB_APP_URL}/index.html`)
-        ])
-    );
-});
+    <script>
+        // Данные из Excel файла с группировкой по категориям
+        const systemsData = {
+            garpun: {
+                name: "Гарпунная система со вставкой по периметру",
+                basicServices: [
+                    { id: 1, name: "Полотно MSD Premium белое матовое с установкой", unit: "м²", price: 610, basePrice: 550, category: "basic" },
+                    { id: 2, name: "Профиль стеновой/потолочный гарпунный с установкой", unit: "м.п.", price: 310, basePrice: 280, category: "basic" },
+                    { id: 3, name: "Вставка по периметру гарпунная", unit: "м.п.", price: 220, basePrice: 200, category: "basic" }
+                ],
+                lightingServices: [
+                    { id: 4, name: "Монтаж закладных под светильники", unit: "шт.", price: 780, basePrice: 700, category: "lighting" },
+                    { id: 5, name: "Монтаж закладных под сдвоенные светильники", unit: "шт.", price: 1350, basePrice: 1200, category: "lighting" },
+                    { id: 6, name: "Монтаж закладных под люстру", unit: "шт.", price: 1100, basePrice: 900, category: "lighting" },
+                    { id: 7, name: "Монтаж закладной для вентилятора", unit: "шт.", price: 1300, basePrice: 1200, category: "lighting" },
+                    { id: 16, name: "Монтаж 'парящего' потолка с LED лентой", unit: "м.п.", price: 1600, basePrice: 1300, category: "lighting" },
+                    { id: 17, name: "Монтаж системы 'EuroKRAAB'", unit: "м.п.", price: 1600, basePrice: 1300, category: "lighting" },
+                    { id: 18, name: "Монтаж световых линий с LED лентой", unit: "м.п.", price: 3400, basePrice: 2800, category: "lighting" },
+                    { id: 22, name: "Монтаж трекового освещения (встраиваемое)", unit: "м.п.", price: 3400, basePrice: 2800, category: "lighting" },
+                    { id: 23, name: "Монтаж трекового освещения (накладное)", unit: "м.п.", price: 1100, basePrice: 900, category: "lighting" }
+                ],
+                additionalServices: [
+                    { id: 8, name: "Монтаж закладной под потолочный карниз", unit: "м.п.", price: 650, basePrice: 550, category: "additional" },
+                    { id: 9, name: "Установка потолочного карниза", unit: "м.п.", price: 270, basePrice: 220, category: "additional" },
+                    { id: 10, name: "Установка разделителей", unit: "м.п.", price: 1700, basePrice: 1500, category: "additional" },
+                    { id: 11, name: "Монтаж закладных под встраиваемые шкафы", unit: "м.п.", price: 1100, basePrice: 900, category: "additional" },
+                    { id: 12, name: "Монтаж шторных карнизов (двухрядный)", unit: "м.п.", price: 4000, basePrice: 3600, category: "additional" },
+                    { id: 13, name: "Монтаж шторных карнизов (трехрядный)", unit: "м.п.", price: 4500, basePrice: 4100, category: "additional" },
+                    { id: 14, name: "Работы по керамической плитке", unit: "м.п.", price: 400, basePrice: 350, category: "additional" },
+                    { id: 15, name: "Установка вентиляционной решетки", unit: "шт.", price: 600, basePrice: 500, category: "additional" },
+                    { id: 19, name: "Монтаж открытой ниши", unit: "м.п.", price: 1200, basePrice: 1000, category: "additional" },
+                    { id: 20, name: "Монтаж ниши с поворотом полотна", unit: "м.п.", price: 3000, basePrice: 2500, category: "additional" },
+                    { id: 21, name: "Монтаж перехода уровня", unit: "м.п.", price: 3700, basePrice: 3100, category: "additional" }
+                ],
+                equipment: [
+                    { id: 1, name: "Светильник", unit: "шт.", price: 600, category: "equipment" }
+                ]
+            },
+            garpun10: {
+                name: "Гарпунная система (+10%)",
+                basicServices: [
+                    { id: 1, name: "Полотно MSD Premium белое матовое с установкой", unit: "м²", price: 670, basePrice: 610, category: "basic" },
+                    { id: 2, name: "Профиль стеновой/потолочный гарпунный с установкой", unit: "м.п.", price: 340, basePrice: 310, category: "basic" },
+                    { id: 3, name: "Вставка по периметру гарпунная", unit: "м.п.", price: 240, basePrice: 220, category: "basic" }
+                ],
+                lightingServices: [
+                    { id: 4, name: "Монтаж закладных под светильники", unit: "шт.", price: 900, basePrice: 780, category: "lighting" },
+                    { id: 5, name: "Монтаж закладных под сдвоенные светильники", unit: "шт.", price: 1500, basePrice: 1350, category: "lighting" },
+                    { id: 6, name: "Монтаж закладных под люстру", unit: "шт.", price: 1200, basePrice: 1100, category: "lighting" },
+                    { id: 7, name: "Монтаж закладной для вентилятора", unit: "шт.", price: 1450, basePrice: 1300, category: "lighting" },
+                    { id: 16, name: "Монтаж 'парящего' потолка с LED лентой", unit: "м.п.", price: 1750, basePrice: 1600, category: "lighting" },
+                    { id: 17, name: "Монтаж системы 'EuroKRAAB'", unit: "м.п.", price: 1750, basePrice: 1600, category: "lighting" },
+                    { id: 18, name: "Монтаж световых линий с LED лентой", unit: "м.п.", price: 3750, basePrice: 3400, category: "lighting" },
+                    { id: 22, name: "Монтаж трекового освещения (встраиваемое)", unit: "м.п.", price: 3750, basePrice: 3400, category: "lighting" },
+                    { id: 23, name: "Монтаж трекового освещения (накладное)", unit: "м.п.", price: 1200, basePrice: 1100, category: "lighting" }
+                ],
+                additionalServices: [
+                    { id: 8, name: "Монтаж закладной под потолочный карниз", unit: "м.п.", price: 720, basePrice: 650, category: "additional" },
+                    { id: 9, name: "Установка потолочного карниза", unit: "м.п.", price: 300, basePrice: 270, category: "additional" },
+                    { id: 10, name: "Установка разделителей", unit: "м.п.", price: 1900, basePrice: 1700, category: "additional" },
+                    { id: 11, name: "Монтаж закладных под встраиваемые шкафы", unit: "м.п.", price: 1200, basePrice: 1100, category: "additional" },
+                    { id: 12, name: "Монтаж шторных карнизов (двухрядный)", unit: "м.п.", price: 4500, basePrice: 4000, category: "additional" },
+                    { id: 13, name: "Монтаж шторных карнизов (трехрядный)", unit: "м.п.", price: 5000, basePrice: 4500, category: "additional" },
+                    { id: 14, name: "Работы по керамической плитке", unit: "м.п.", price: 450, basePrice: 400, category: "additional" },
+                    { id: 15, name: "Установка вентиляционной решетки", unit: "шт.", price: 650, basePrice: 600, category: "additional" },
+                    { id: 19, name: "Монтаж открытой ниши", unit: "м.п.", price: 1350, basePrice: 1200, category: "additional" },
+                    { id: 20, name: "Монтаж ниши с поворотом полотна", unit: "м.п.", price: 3300, basePrice: 3000, category: "additional" },
+                    { id: 21, name: "Монтаж перехода уровня", unit: "м.п.", price: 4100, basePrice: 3700, category: "additional" }
+                ],
+                equipment: [
+                    { id: 1, name: "Светильник", unit: "шт.", price: 650, category: "equipment" }
+                ]
+            }
+        };
 
-// Команда /contacts
-bot.command('contacts', (ctx) => {
-    ctx.reply(
-        '📞 *Контакты:*\n\n' +
-        'Телефон: 8(977)531-10-99\n' +
-        'Email: Potolokforlife@yandex.ru\n' +
-        'Адрес: Пушкино',
-        { parse_mode: 'Markdown' }
-    );
-});
-
-// Команда /help
-bot.command('help', (ctx) => {
-    ctx.reply(
-        '🆘 *Помощь по боту*\n\n' +
-        'Основные команды:\n' +
-        '/start - Запустить бота\n' +
-        '/calc - Открыть калькулятор\n' +
-        '/contacts - Контакты компании\n\n' +
-        'Или используйте кнопки меню.\n\n' +
-        'Если что-то не работает, напишите нам: Potolokforlife@yandex.ru',
-        { parse_mode: 'Markdown' }
-    );
-});
-
-// Настройка Express сервера
-app.use(express.static('public'));
-
-// Маршрут для главной страницы
-app.get('/', (req, res) => {
-    res.send('PotolokForLife калькулятор работает!');
-});
-
-// Запуск бота и сервера
-async function start() {
-    try {
-        // Запускаем бота
-        await bot.launch();
-        console.log('🤖 Бот запущен!');
-
-        // Запускаем веб-сервер
-        const PORT = process.env.PORT || 3000;
-        app.listen(PORT, () => {
-            console.log(`🌐 Веб-сервер запущен на порту ${PORT}`);
-            console.log(`📱 Web App URL: http://localhost:${PORT}`);
+        // Переменные приложения
+        let currentSystem = 'garpun';
+        let selectedServices = [];
+        let selectedEquipment = [];
+        let costChart = null;
+        let tg = null; // Telegram Web App объект
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем, открыто ли в Telegram
+            initializeTelegram();
+            
+            initializeMobileNavigation();
+            initializeSystemSelector();
+            initializeAccordions();
+            loadServices();
+            initializeCharts();
+            setupEventListeners();
+            calculateEstimate();
+            
+            // Показать подсказку при первом посещении
+            if (!localStorage.getItem('potolokAppVisited')) {
+                showToast('Добро пожаловать! Листайте вправо для навигации', 3000);
+                localStorage.setItem('potolokAppVisited', 'true');
+            }
         });
-
-        // Обработка остановки
-        process.once('SIGINT', () => bot.stop('SIGINT'));
-        process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
-    } catch (error) {
-        console.error('Ошибка запуска:', error);
-    }
-}
-
-start();
+        
+        // Инициализация Telegram Web App
+        function initializeTelegram() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                tg = window.Telegram.WebApp;
+                
+                // Настраиваем Telegram Web App
+                tg.expand(); // Раскрываем на весь экран
+                tg.setHeaderColor('#1e3c72');
+                tg.setBackgroundColor('#f5f7fa');
+                
+                // Показываем статус Telegram
+                document.getElementById('telegramStatus').style.display = 'block';
+                
+                // Настраиваем основную кнопку в Telegram (скрываем, т.к. у нас свои кнопки)
+                tg.MainButton.hide();
+                
+                console.log('Telegram Web App инициализирован');
+            }
+        }
+        
+        // Инициализация мобильной навигации
+        function initializeMobileNavigation() {
+            const navTabs = document.querySelectorAll('.nav-tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            navTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.dataset.tab;
+                    
+                    // Обновляем активную вкладку
+                    navTabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Показываем соответствующий контент
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${targetTab}-tab`) {
+                            content.classList.add('active');
+                        }
+                    });
+                    
+                    // Прокручиваем к началу вкладки
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    // Обновляем расчет при переходе на вкладку результатов
+                    if (targetTab === 'results') {
+                        calculateEstimate();
+                    }
+                });
+            });
+            
+            // Добавляем обработчики свайпов
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            document.addEventListener('touchstart', e => {
+                touchStartX = e.changedTouches[0].screenX;
+            });
+            
+            document.addEventListener('touchend', e => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            });
+            
+            function handleSwipe() {
+                const swipeThreshold = 50;
+                const swipeDistance = touchEndX - touchStartX;
+                
+                if (Math.abs(swipeDistance) < swipeThreshold) return;
+                
+                const currentTab = document.querySelector('.nav-tab.active').dataset.tab;
+                let targetTab = currentTab;
+                
+                if (swipeDistance > 0) {
+                    // Свайп вправо - предыдущая вкладка
+                    if (currentTab === 'services') targetTab = 'parameters';
+                    else if (currentTab === 'results') targetTab = 'services';
+                } else {
+                    // Свайп влево - следующая вкладка
+                    if (currentTab === 'parameters') targetTab = 'services';
+                    else if (currentTab === 'services') targetTab = 'results';
+                }
+                
+                if (targetTab !== currentTab) {
+                    document.querySelector(`.nav-tab[data-tab="${targetTab}"]`).click();
+                }
+            }
+        }
+        
+        // Инициализация выбора системы
+        function initializeSystemSelector() {
+            const systemButtons = document.querySelectorAll('.system-btn');
+            systemButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    systemButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentSystem = this.dataset.system;
+                    loadServices();
+                    calculateEstimate();
+                    showToast(`Выбрана система: ${systemsData[currentSystem].name}`, 2000);
+                });
+            });
+        }
+        
+        // Инициализация аккордеонов
+        function initializeAccordions() {
+            const accordions = document.querySelectorAll('.accordion');
+            accordions.forEach(accordion => {
+                const header = accordion.querySelector('.accordion-header');
+                header.addEventListener('click', function() {
+                    accordion.classList.toggle('active');
+                    const icon = this.querySelector('i');
+                    icon.classList.toggle('fa-chevron-down');
+                    icon.classList.toggle('fa-chevron-up');
+                });
+            });
+        }
+        
+        // Загрузка услуг в зависимости от выбранной системы
+        function loadServices() {
+            const system = systemsData[currentSystem];
+            
+            // Загружаем основные услуги
+            const basicServicesList = document.getElementById('basicServicesList');
+            basicServicesList.innerHTML = '';
+            system.basicServices.forEach(service => {
+                basicServicesList.appendChild(createServiceElement(service));
+            });
+            
+            // Загружаем услуги по освещению
+            const lightingServicesList = document.getElementById('lightingServicesList');
+            lightingServicesList.innerHTML = '';
+            system.lightingServices.forEach(service => {
+                lightingServicesList.appendChild(createServiceElement(service));
+            });
+            
+            // Загружаем дополнительные услуги
+            const additionalServicesList = document.getElementById('additionalServicesList');
+            additionalServicesList.innerHTML = '';
+            system.additionalServices.forEach(service => {
+                additionalServicesList.appendChild(createServiceElement(service));
+            });
+            
+            // Загружаем оборудование
+            const equipmentList = document.getElementById('equipmentList');
+            equipmentList.innerHTML = '';
+            system.equipment.forEach(item => {
+                equipmentList.appendChild(createServiceElement(item, true));
+            });
+        }
+        
+        // Создание элемента услуги
+        function createServiceElement(service, isEquipment = false) {
+            const element = document.createElement('div');
+            element.className = 'service-item';
+            element.innerHTML = `
+                <div class="service-info">
+                    <div class="service-name">${service.name}</div>
+                    <div class="service-unit">${service.unit}</div>
+                </div>
+                <div class="service-controls">
+                    <div class="service-price">${service.price} руб.</div>
+                    <input type="number" class="quantity-input" 
+                           data-id="${service.id}" 
+                           data-type="${isEquipment ? 'equipment' : 'service'}"
+                           data-category="${service.category}"
+                           min="0" value="0" step="1">
+                </div>
+            `;
+            
+            // Добавляем обработчик события для поля ввода
+            const input = element.querySelector('.quantity-input');
+            input.addEventListener('input', calculateEstimate);
+            input.addEventListener('change', calculateEstimate);
+            
+            return element;
+        }
+        
+        // Настройка слушателей событий
+        function setupEventListeners() {
+            // Основные кнопки на вкладке параметров
+            document.getElementById('calculateBtn').addEventListener('click', calculateEstimate);
+            document.getElementById('resetBtn').addEventListener('click', resetCalculator);
+            document.getElementById('saveBtn').addEventListener('click', saveEstimate);
+            
+            // Кнопки на вкладке услуг
+            document.getElementById('calculateBtn2').addEventListener('click', calculateEstimate);
+            document.getElementById('resetBtn2').addEventListener('click', resetCalculator);
+            document.getElementById('saveBtn2').addEventListener('click', saveEstimate);
+            
+            // Кнопки на вкладке результатов
+            document.getElementById('calculateBtn3').addEventListener('click', calculateEstimate);
+            document.getElementById('resetBtn3').addEventListener('click', resetCalculator);
+            document.getElementById('saveBtn3').addEventListener('click', saveEstimate);
+            document.getElementById('printBtn').addEventListener('click', printEstimate);
+            document.getElementById('telegramBtn').addEventListener('click', sendToTelegram);
+            
+            // FAB кнопка
+            document.getElementById('fabBtn').addEventListener('click', function() {
+                // При нажатии на FAB переходим на вкладку результатов и отправляем в Telegram
+                document.querySelector('.nav-tab[data-tab="results"]').click();
+                setTimeout(() => {
+                    sendToTelegram();
+                }, 500);
+            });
+            
+            // Слушатели для полей ввода параметров
+            document.getElementById('area').addEventListener('input', calculateEstimate);
+            document.getElementById('perimeter').addEventListener('input', calculateEstimate);
+            document.getElementById('height').addEventListener('input', calculateEstimate);
+            document.getElementById('canvasType').addEventListener('change', calculateEstimate);
+            document.getElementById('objectType').addEventListener('change', calculateEstimate);
+            document.getElementById('roomCount').addEventListener('input', calculateEstimate);
+            document.getElementById('objectAddress').addEventListener('input', updateSummary);
+            
+            // Обработка нажатия кнопок на мобильных устройствах
+            document.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('touchstart', function() {
+                    this.style.opacity = '0.8';
+                });
+                
+                btn.addEventListener('touchend', function() {
+                    this.style.opacity = '1';
+                });
+            });
+        }
+        
+        // Расчет сметы
+        function calculateEstimate() {
+            const system = systemsData[currentSystem];
+            const area = parseFloat(document.getElementById('area').value) || 0;
+            const perimeter = parseFloat(document.getElementById('perimeter').value) || 0;
+            
+            // Сбрасываем массивы выбранных услуг
+            selectedServices = [];
+            selectedEquipment = [];
+            
+            // Собираем выбранные услуги из всех категорий
+            document.querySelectorAll('.quantity-input[data-type="service"]').forEach(input => {
+                const quantity = parseInt(input.value) || 0;
+                if (quantity > 0) {
+                    const serviceId = parseInt(input.dataset.id);
+                    const category = input.dataset.category;
+                    
+                    // Находим услугу в соответствующей категории
+                    let service;
+                    if (category === 'basic') {
+                        service = system.basicServices.find(s => s.id === serviceId);
+                    } else if (category === 'lighting') {
+                        service = system.lightingServices.find(s => s.id === serviceId);
+                    } else if (category === 'additional') {
+                        service = system.additionalServices.find(s => s.id === serviceId);
+                    }
+                    
+                    if (service) {
+                        selectedServices.push({
+                            ...service,
+                            quantity,
+                            total: service.price * quantity
+                        });
+                    }
+                }
+            });
+            
+            // Собираем выбранное оборудование
+            document.querySelectorAll('.quantity-input[data-type="equipment"]').forEach(input => {
+                const quantity = parseInt(input.value) || 0;
+                if (quantity > 0) {
+                    const equipmentId = parseInt(input.dataset.id);
+                    const equipment = system.equipment.find(e => e.id === equipmentId);
+                    if (equipment) {
+                        selectedEquipment.push({
+                            ...equipment,
+                            quantity,
+                            total: equipment.price * quantity
+                        });
+                    }
+                }
+            });
+            
+            // Автоматически добавляем основные элементы на основе введенных параметров
+            // Полотно (если указана площадь)
+            if (area > 0) {
+                const canvasService = system.basicServices.find(s => s.id === 1);
+                if (canvasService && !selectedServices.some(s => s.id === 1)) {
+                    // Устанавливаем значение в поле ввода
+                    const canvasInput = document.querySelector('.quantity-input[data-id="1"]');
+                    if (canvasInput) {
+                        canvasInput.value = area;
+                    }
+                    
+                    selectedServices.push({
+                        ...canvasService,
+                        quantity: area,
+                        total: canvasService.price * area
+                    });
+                }
+            }
+            
+            // Профиль (если указан периметр)
+            if (perimeter > 0) {
+                const profileService = system.basicServices.find(s => s.id === 2);
+                if (profileService && !selectedServices.some(s => s.id === 2)) {
+                    // Устанавливаем значение в поле ввода
+                    const profileInput = document.querySelector('.quantity-input[data-id="2"]');
+                    if (profileInput) {
+                        profileInput.value = perimeter;
+                    }
+                    
+                    selectedServices.push({
+                        ...profileService,
+                        quantity: perimeter,
+                        total: profileService.price * perimeter
+                    });
+                }
+                
+                // Вставка по периметру (если указан периметр)
+                const insertService = system.basicServices.find(s => s.id === 3);
+                if (insertService && !selectedServices.some(s => s.id === 3)) {
+                    // Устанавливаем значение в поле ввода
+                    const insertInput = document.querySelector('.quantity-input[data-id="3"]');
+                    if (insertInput) {
+                        insertInput.value = perimeter;
+                    }
+                    
+                    selectedServices.push({
+                        ...insertService,
+                        quantity: perimeter,
+                        total: insertService.price * perimeter
+                    });
+                }
+            }
+            
+            // Рассчитываем общие суммы
+            let materialsCost = 0;
+            let workCost = 0;
+            let equipmentCost = 0;
+            
+            // Разделяем стоимость на материалы и работы
+            selectedServices.forEach(service => {
+                const materialPart = service.basePrice * service.quantity;
+                const workPart = (service.price - service.basePrice) * service.quantity;
+                materialsCost += materialPart;
+                workCost += workPart;
+            });
+            
+            // Стоимость оборудования
+            selectedEquipment.forEach(item => {
+                equipmentCost += item.total;
+            });
+            
+            const totalCost = materialsCost + workCost + equipmentCost;
+            
+            // Обновляем интерфейс
+            document.getElementById('materialsCost').textContent = formatCurrency(materialsCost);
+            document.getElementById('workCost').textContent = formatCurrency(workCost);
+            document.getElementById('equipmentCost').textContent = formatCurrency(equipmentCost);
+            document.getElementById('totalCost').textContent = formatCurrency(totalCost);
+            
+            // Обновляем информацию об оплате
+            const prepayment = totalCost * 0.5;
+            const finalPayment = totalCost * 0.5;
+            document.getElementById('prepaymentAmount').textContent = formatCurrency(prepayment);
+            document.getElementById('finalPaymentAmount').textContent = formatCurrency(finalPayment);
+            
+            // Обновляем сводную таблицу
+            updateSummaryTable();
+            
+            // Обновляем графики
+            updateCharts(materialsCost, workCost, equipmentCost);
+            
+            // Показываем уведомление
+            showToast('Смета рассчитана!', 1500);
+        }
+        
+        // Обновление сводной таблицы
+        function updateSummaryTable() {
+            const tableBody = document.getElementById('summaryTableBody');
+            tableBody.innerHTML = '';
+            
+            if (selectedServices.length === 0 && selectedEquipment.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <p>Добавьте элементы для расчета</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Добавляем услуги
+            selectedServices.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.quantity} ${item.unit}</td>
+                    <td>${formatCurrency(item.price)}</td>
+                    <td>${formatCurrency(item.total)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Добавляем оборудование
+            selectedEquipment.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name} (оборудование)</td>
+                    <td>${item.quantity} ${item.unit}</td>
+                    <td>${formatCurrency(item.price)}</td>
+                    <td>${formatCurrency(item.total)}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Добавляем итоговую строку
+            const materialsCost = selectedServices.reduce((sum, s) => sum + (s.basePrice * s.quantity), 0);
+            const workCost = selectedServices.reduce((sum, s) => sum + ((s.price - s.basePrice) * s.quantity), 0);
+            const equipmentCost = selectedEquipment.reduce((sum, e) => sum + e.total, 0);
+            const totalCost = materialsCost + workCost + equipmentCost;
+            
+            const totalRow = document.createElement('tr');
+            totalRow.className = 'total-row';
+            totalRow.innerHTML = `
+                <td colspan="3"><strong>ИТОГО:</strong></td>
+                <td><strong>${formatCurrency(totalCost)}</strong></td>
+            `;
+            tableBody.appendChild(totalRow);
+        }
+        
+        // Обновление информации об объекте
+        function updateSummary() {
+            // Можно добавить отображение этой информации где-нибудь в интерфейсе
+            const address = document.getElementById('objectAddress').value;
+            if (address) {
+                console.log(`Адрес объекта: ${address}`);
+            }
+        }
+        
+        // Инициализация графиков
+        function initializeCharts() {
+            // График распределения стоимости
+            const costCtx = document.getElementById('costDistributionChart').getContext('2d');
+            costChart = new Chart(costCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Материалы', 'Работы', 'Оборудование'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#1e3c72', '#2a5298', '#3a6bc9'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${formatCurrency(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Обновление графиков
+        function updateCharts(materialsCost, workCost, equipmentCost) {
+            if (costChart) {
+                costChart.data.datasets[0].data = [materialsCost, workCost, equipmentCost];
+                costChart.update();
+            }
+        }
+        
+        // Сброс калькулятора
+        function resetCalculator() {
+            if (!confirm('Вы уверены, что хотите сбросить все данные?')) {
+                return;
+            }
+            
+            // Сброс полей ввода параметров
+            document.getElementById('area').value = 0;
+            document.getElementById('perimeter').value = 0;
+            document.getElementById('height').value = 0;
+            document.getElementById('objectAddress').value = '';
+            document.getElementById('roomCount').value = 1;
+            
+            // Сброс полей количества услуг и оборудования
+            document.querySelectorAll('.quantity-input').forEach(input => {
+                input.value = 0;
+            });
+            
+            // Сброс выбранной системы
+            document.querySelectorAll('.system-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector('.system-btn[data-system="garpun"]').classList.add('active');
+            currentSystem = 'garpun';
+            
+            // Перезагрузка услуг
+            loadServices();
+            
+            // Перерасчет
+            calculateEstimate();
+            
+            // Переход на первую вкладку
+            document.querySelector('.nav-tab[data-tab="parameters"]').click();
+            
+            showToast('Все данные сброшены', 2000);
+        }
+        
+        // Сохранение сметы
+        function saveEstimate() {
+            const materialsCost = parseFloat(document.getElementById('materialsCost').textContent.replace(/[^\d.]/g, ''));
+            const workCost = parseFloat(document.getElementById('workCost').textContent.replace(/[^\d.]/g, ''));
+            const equipmentCost = parseFloat(document.getElementById('equipmentCost').textContent.replace(/[^\d.]/g, ''));
+            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace(/[^\d.]/g, ''));
+            
+            const address = document.getElementById('objectAddress').value || 'Не указан';
+            const objectType = document.getElementById('objectType').value;
+            const roomCount = document.getElementById('roomCount').value;
+            const systemName = systemsData[currentSystem].name;
+            
+            const estimateData = {
+                objectType,
+                address,
+                roomCount,
+                systemName,
+                materialsCost,
+                workCost,
+                equipmentCost,
+                totalCost,
+                services: selectedServices,
+                equipment: selectedEquipment,
+                date: new Date().toISOString()
+            };
+            
+            // Сохраняем в localStorage
+            const estimates = JSON.parse(localStorage.getItem('potolokEstimates') || '[]');
+            estimates.push(estimateData);
+            localStorage.setItem('potolokEstimates', JSON.stringify(estimates));
+            
+            showToast('Смета сохранена!', 2000);
+        }
+        
+        // Отправка в Telegram
+        function sendToTelegram() {
+            const materialsCost = parseFloat(document.getElementById('materialsCost').textContent.replace(/[^\d.]/g, ''));
+            const workCost = parseFloat(document.getElementById('workCost').textContent.replace(/[^\d.]/g, ''));
+            const equipmentCost = parseFloat(document.getElementById('equipmentCost').textContent.replace(/[^\d.]/g, ''));
+            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace(/[^\d.]/g, ''));
+            
+            const address = document.getElementById('objectAddress').value || 'Не указан';
+            const objectType = document.getElementById('objectType').value;
+            const roomCount = document.getElementById('roomCount').value;
+            const area = document.getElementById('area').value || 0;
+            const systemName = systemsData[currentSystem].name;
+            
+            // Формируем сообщение для Telegram
+            const message = `🏠 *Смета на натяжные потолки*\n\n` +
+                           `*Тип объекта:* ${objectType}\n` +
+                           `*Адрес:* ${address}\n` +
+                           `*Помещений:* ${roomCount}\n` +
+                           `*Площадь:* ${area} м²\n` +
+                           `*Система:* ${systemName}\n\n` +
+                           `*Стоимость материалов:* ${formatCurrency(materialsCost)}\n` +
+                           `*Стоимость работ:* ${formatCurrency(workCost)}\n` +
+                           `*Оборудование:* ${formatCurrency(equipmentCost)}\n\n` +
+                           `🎯 *ИТОГО: ${formatCurrency(totalCost)}*\n\n` +
+                           `📞 *Для заказа:*\n` +
+                           `Телефон: 8(977)531-10-99\n` +
+                           `Email: Potolokforlife@yandex.ru\n\n` +
+                           `📅 ${new Date().toLocaleString('ru-RU')}`;
+            
+            // Если открыто в Telegram Web App
+            if (tg) {
+                // Отправляем данные в Telegram
+                tg.sendData(JSON.stringify({
+                    type: 'estimate',
+                    totalCost: totalCost,
+                    address: address,
+                    area: area,
+                    roomCount: roomCount,
+                    objectType: objectType,
+                    systemName: systemName,
+                    message: message
+                }));
+                
+                // Показываем уведомление
+                tg.showAlert('✅ Смета отправлена!\n\nМенеджер свяжется с вами в течение 30 минут.', function() {
+                    tg.close();
+                });
+            } else {
+                // Если открыто в браузере
+                alert('Сообщение для менеджера:\n\n' + message.replace(/\*/g, ''));
+                
+                // Можно открыть WhatsApp с сообщением
+                const whatsappMessage = `Здравствуйте! Рассчитал стоимость натяжного потолка:\n\n` +
+                                      `Адрес: ${address}\n` +
+                                      `Площадь: ${area} м²\n` +
+                                      `Стоимость: ${formatCurrency(totalCost)}\n\n` +
+                                      `Прошу связаться со мной для уточнения деталей.`;
+                
+                const whatsappUrl = `https://wa.me/79775311099?text=${encodeURIComponent(whatsappMessage)}`;
+                window.open(whatsappUrl, '_blank');
+            }
+        }
+        
+        // Печать сметы
+        function printEstimate() {
+            const materialsCost = parseFloat(document.getElementById('materialsCost').textContent.replace(/[^\d.]/g, ''));
+            const workCost = parseFloat(document.getElementById('workCost').textContent.replace(/[^\d.]/g, ''));
+            const equipmentCost = parseFloat(document.getElementById('equipmentCost').textContent.replace(/[^\d.]/g, ''));
+            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace(/[^\d.]/g, ''));
+            
+            const address = document.getElementById('objectAddress').value || 'Не указан';
+            const objectType = document.getElementById('objectType').value;
+            const roomCount = document.getElementById('roomCount').value;
+            const systemName = systemsData[currentSystem].name;
+            
+            // Создаем содержимое для печати
+            const printContent = `
+                <html>
+                <head>
+                    <title>Смета PotolokForLife</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #1e3c72; padding-bottom: 20px; }
+                        .header h1 { color: #1e3c72; margin-bottom: 10px; }
+                        .info { margin-bottom: 20px; padding: 15px; background: #f0f7ff; border-radius: 8px; }
+                        .info table { width: 100%; border-collapse: collapse; }
+                        .info td { padding: 8px; border-bottom: 1px solid #ddd; }
+                        .summary { background: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                        .summary-item { display: flex; justify-content: space-between; margin-bottom: 10px; }
+                        .total { font-size: 24px; font-weight: bold; color: #1e3c72; text-align: center; margin: 20px 0; padding: 15px; border-top: 2px solid #1e3c72; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                        th { background: #f8f9fa; color: #1e3c72; }
+                        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+                        @media print {
+                            body { padding: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>PotolokForLife</h1>
+                        <p>Натяжные потолки на всю жизнь • Пушкино</p>
+                        <p>Email: Potolokforlife@yandex.ru • Тел: 8(977)531-10-99, 8(977)709-38-43</p>
+                    </div>
+                    
+                    <div class="info">
+                        <h2>Информация об объекте</h2>
+                        <table>
+                            <tr><td><strong>Тип объекта:</strong></td><td>${objectType}</td></tr>
+                            <tr><td><strong>Адрес:</strong></td><td>${address}</td></tr>
+                            <tr><td><strong>Количество помещений:</strong></td><td>${roomCount}</td></tr>
+                            <tr><td><strong>Система потолка:</strong></td><td>${systemName}</td></tr>
+                            <tr><td><strong>Дата расчета:</strong></td><td>${new Date().toLocaleDateString('ru-RU')}</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="summary">
+                        <h2>Сводка по стоимости</h2>
+                        <div class="summary-item">
+                            <span>Материалы:</span>
+                            <span>${formatCurrency(materialsCost)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>Работы:</span>
+                            <span>${formatCurrency(workCost)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span>Оборудование:</span>
+                            <span>${formatCurrency(equipmentCost)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="total">ИТОГО: ${formatCurrency(totalCost)}</div>
+                    
+                    <h2>Детализация сметы</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Наименование</th>
+                                <th>Кол-во</th>
+                                <th>Цена</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${selectedServices.map(item => `
+                                <tr>
+                                    <td>${item.name}</td>
+                                    <td>${item.quantity} ${item.unit}</td>
+                                    <td>${formatCurrency(item.price)}</td>
+                                    <td>${formatCurrency(item.total)}</td>
+                                </tr>
+                            `).join('')}
+                            ${selectedEquipment.map(item => `
+                                <tr>
+                                    <td>${item.name} (оборудование)</td>
+                                    <td>${item.quantity} ${item.unit}</td>
+                                    <td>${formatCurrency(item.price)}</td>
+                                    <td>${formatCurrency(item.total)}</td>
+                                </tr>
+                            `).join('')}
+                            <tr style="font-weight: bold; background: #f0f0f0;">
+                                <td colspan="3">ИТОГО:</td>
+                                <td>${formatCurrency(totalCost)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="footer">
+                        <p><strong>Порядок оплаты:</strong></p>
+                        <p>1. Предоплата 50% (${formatCurrency(totalCost * 0.5)}) не позднее 3-х дней до планируемой даты выполнения монтажа 1-го этапа.</p>
+                        <p>2. Окончательный расчет 50% (${formatCurrency(totalCost * 0.5)}) в день завершения всех работ.</p>
+                        <p>3. Оплата за материалы из раздела "Оборудование" производится из расчета 100% до начала выполнения работ.</p>
+                        <p class="no-print">Смета сгенерирована в мобильном приложении PotolokForLife</p>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            // Открываем новое окно для печати
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            
+            // Даем время на загрузку контента перед печатью
+            setTimeout(() => {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+        }
+        
+        // Форматирование валюты
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount).replace('RUB', 'руб.');
+        }
+        
+        // Показать toast-уведомление
+        function showToast(message, duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+        
+        // Предотвращение случайного закрытия страницы при наличии данных
+        window.addEventListener('beforeunload', function(e) {
+            const totalCost = parseFloat(document.getElementById('totalCost').textContent.replace(/[^\d.]/g, ''));
+            if (totalCost > 0) {
+                e.preventDefault();
+                e.returnValue = 'У вас есть несохраненная смета. Вы уверены, что хотите покинуть страницу?';
+            }
+        });
+    </script>
+</body>
+</html>
