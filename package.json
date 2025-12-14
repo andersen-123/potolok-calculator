@@ -1,0 +1,17 @@
+{
+  "name": "potolok-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram бот для расчета натяжных потолков",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "nodemon bot.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.12.2",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
