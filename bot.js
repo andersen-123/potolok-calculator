@@ -7,7 +7,7 @@ const express = require('express');
 const app = express();
 
 // ВАШ ТОКЕН ОТ @BotFather
-const BOT_TOKEN = 'ВСТАВЬТЕ_ВАШ_ТОКЕН_ЗДЕСЬ';
+const BOT_TOKEN = '1095203814:AAGMIweg9YJDPQqCmCMgWTDBI_BBmbFhLj8';
 
 // URL вашего калькулятора (пока оставьте как есть, изменим позже)
 const WEB_APP_URL = 'https://andersen-123.github.io/potolok-calculator/';
