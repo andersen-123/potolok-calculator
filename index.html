@@ -18,6 +18,7 @@
             --success-color: #28a745;
             --warning-color: #ffc107;
             --danger-color: #dc3545;
+            --telegram-color: #0088cc;
             --border-radius: 12px;
             --box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             --transition: all 0.3s ease;
@@ -37,6 +38,7 @@
             line-height: 1.5;
             overflow-x: hidden;
             padding: 0;
+            padding-bottom: 80px; /* Место для кнопок внизу */
         }
         
         .container {
@@ -446,36 +448,38 @@
             font-size: 1.1rem;
         }
         
-        /* Buttons */
-        .buttons-container {
+        /* Action Buttons - теперь внутри карточек */
+        .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin: 25px 0;
-            position: sticky;
-            bottom: 0;
-            background: var(--light-color);
-            padding: 15px 0;
-            border-top: 1px solid #ddd;
+            gap: 12px;
+            margin-top: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .btn-row {
+            display: flex;
+            gap: 10px;
         }
         
         .btn {
-            padding: 16px 20px;
+            padding: 14px 16px;
             border: none;
             border-radius: 10px;
-            font-size: 1rem;
-            font-weight: 700;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
+            flex: 1;
         }
         
         .btn:active {
-            transform: scale(0.98);
+            transform: scale(0.97);
         }
         
         .btn-primary {
@@ -501,9 +505,8 @@
             color: white;
         }
         
-        /* Telegram button */
         .btn-telegram {
-            background: linear-gradient(135deg, #0088cc, #00aced);
+            background: linear-gradient(135deg, var(--telegram-color), #00aced);
             color: white;
         }
         
@@ -564,6 +567,18 @@
             gap: 5px;
         }
         
+        /* Telegram Status */
+        .telegram-status {
+            display: none;
+            background: var(--telegram-color);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 480px) {
             .container {
@@ -581,6 +596,8 @@
             
             .system-btn {
                 min-width: 100px;
+                padding: 10px 12px;
+                font-size: 0.85rem;
             }
             
             .service-controls {
@@ -591,6 +608,8 @@
             
             .quantity-input {
                 width: 60px;
+                padding: 8px;
+                font-size: 0.9rem;
             }
             
             .results {
@@ -599,7 +618,12 @@
             }
             
             .btn {
-                padding: 18px 20px;
+                padding: 12px 14px;
+                font-size: 0.9rem;
+            }
+            
+            .btn i {
+                font-size: 0.9rem;
             }
         }
         
@@ -685,12 +709,47 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
         }
+        
+        /* Floating action button for mobile */
+        .fab-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 20px rgba(30, 60, 114, 0.3);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .fab:active {
+            transform: scale(0.95);
+        }
+        
+        @media (max-width: 768px) {
+            .fab-container {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Telegram Status -->
-        <div id="telegramStatus" style="display: none; background: #0088cc; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+        <div class="telegram-status" id="telegramStatus">
             <i class="fab fa-telegram"></i> Открыто в Telegram
         </div>
         
@@ -791,6 +850,22 @@
                         <option value="color">Цветное матовое</option>
                     </select>
                 </div>
+                
+                <!-- Кнопки теперь внутри карточки -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="calculateBtn">
+                        <i class="fas fa-calculator"></i> Рассчитать смету
+                    </button>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="resetBtn">
+                            <i class="fas fa-redo"></i> Сбросить
+                        </button>
+                        <button class="btn btn-success" id="saveBtn">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="swipe-hint">
@@ -856,6 +931,22 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- Кнопки в карточке услуг -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="calculateBtn2">
+                        <i class="fas fa-calculator"></i> Рассчитать смету
+                    </button>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="resetBtn2">
+                            <i class="fas fa-redo"></i> Сбросить
+                        </button>
+                        <button class="btn btn-success" id="saveBtn2">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="swipe-hint">
@@ -918,6 +1009,31 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- Кнопки в карточке результатов -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="calculateBtn3">
+                        <i class="fas fa-calculator"></i> Пересчитать
+                    </button>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="resetBtn3">
+                            <i class="fas fa-redo"></i> Сбросить
+                        </button>
+                        <button class="btn btn-success" id="saveBtn3">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-secondary" id="printBtn">
+                            <i class="fas fa-print"></i> Печать
+                        </button>
+                        <button class="btn btn-telegram" id="telegramBtn">
+                            <i class="fab fa-telegram"></i> Telegram
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="chart-container">
@@ -931,33 +1047,15 @@
             </div>
         </div>
         
-        <!-- Action Buttons -->
-        <div class="buttons-container">
-            <button class="btn btn-primary" id="calculateBtn">
-                <i class="fas fa-calculator"></i> Рассчитать смету
-            </button>
-            
-            <div class="input-row">
-                <button class="btn btn-secondary" id="resetBtn">
-                    <i class="fas fa-redo"></i> Сбросить
-                </button>
-                <button class="btn btn-success" id="saveBtn">
-                    <i class="fas fa-save"></i> Сохранить
-                </button>
-            </div>
-            
-            <button class="btn btn-primary" id="printBtn">
-                <i class="fas fa-print"></i> Печать сметы
-            </button>
-            
-            <!-- Telegram Send Button -->
-            <button class="btn btn-telegram" id="telegramBtn">
-                <i class="fab fa-telegram"></i> Отправить в Telegram
-            </button>
-        </div>
-        
         <!-- Toast Notification -->
         <div class="toast" id="toast"></div>
+    </div>
+
+    <!-- Floating Action Button for quick access -->
+    <div class="fab-container">
+        <button class="fab" id="fabBtn">
+            <i class="fas fa-paper-plane"></i>
+        </button>
     </div>
 
     <script>
@@ -1075,23 +1173,8 @@
                 // Показываем статус Telegram
                 document.getElementById('telegramStatus').style.display = 'block';
                 
-                // Настраиваем основную кнопку в Telegram
-                tg.MainButton.setText("📤 Отправить смету");
-                tg.MainButton.onClick(sendToTelegram);
-                tg.MainButton.show();
-                
-                // Добавляем кнопку "Назад"
-                tg.BackButton.show();
-                tg.BackButton.onClick(function() {
-                    const currentTab = document.querySelector('.nav-tab.active').dataset.tab;
-                    if (currentTab === 'results') {
-                        document.querySelector('.nav-tab[data-tab="services"]').click();
-                    } else if (currentTab === 'services') {
-                        document.querySelector('.nav-tab[data-tab="parameters"]').click();
-                    } else {
-                        tg.close();
-                    }
-                });
+                // Настраиваем основную кнопку в Telegram (скрываем, т.к. у нас свои кнопки)
+                tg.MainButton.hide();
                 
                 console.log('Telegram Web App инициализирован');
             }
@@ -1252,35 +1335,36 @@
             input.addEventListener('input', calculateEstimate);
             input.addEventListener('change', calculateEstimate);
             
-            // Добавляем обработчик для быстрого ввода (+, -)
-            input.addEventListener('touchstart', function(e) {
-                if (e.target.tagName === 'INPUT') return;
-                
-                const rect = this.getBoundingClientRect();
-                const x = e.touches[0].clientX - rect.left;
-                const width = rect.width;
-                
-                if (x < width / 3) {
-                    // Нажатие на левую треть - уменьшение
-                    this.value = Math.max(0, parseInt(this.value) - 1);
-                    this.dispatchEvent(new Event('input'));
-                } else if (x > 2 * width / 3) {
-                    // Нажатие на правую треть - увеличение
-                    this.value = parseInt(this.value) + 1;
-                    this.dispatchEvent(new Event('input'));
-                }
-            });
-            
             return element;
         }
         
         // Настройка слушателей событий
         function setupEventListeners() {
+            // Основные кнопки на вкладке параметров
             document.getElementById('calculateBtn').addEventListener('click', calculateEstimate);
             document.getElementById('resetBtn').addEventListener('click', resetCalculator);
             document.getElementById('saveBtn').addEventListener('click', saveEstimate);
+            
+            // Кнопки на вкладке услуг
+            document.getElementById('calculateBtn2').addEventListener('click', calculateEstimate);
+            document.getElementById('resetBtn2').addEventListener('click', resetCalculator);
+            document.getElementById('saveBtn2').addEventListener('click', saveEstimate);
+            
+            // Кнопки на вкладке результатов
+            document.getElementById('calculateBtn3').addEventListener('click', calculateEstimate);
+            document.getElementById('resetBtn3').addEventListener('click', resetCalculator);
+            document.getElementById('saveBtn3').addEventListener('click', saveEstimate);
             document.getElementById('printBtn').addEventListener('click', printEstimate);
             document.getElementById('telegramBtn').addEventListener('click', sendToTelegram);
+            
+            // FAB кнопка
+            document.getElementById('fabBtn').addEventListener('click', function() {
+                // При нажатии на FAB переходим на вкладку результатов и отправляем в Telegram
+                document.querySelector('.nav-tab[data-tab="results"]').click();
+                setTimeout(() => {
+                    sendToTelegram();
+                }, 500);
+            });
             
             // Слушатели для полей ввода параметров
             document.getElementById('area').addEventListener('input', calculateEstimate);
@@ -1446,6 +1530,9 @@
             
             // Обновляем графики
             updateCharts(materialsCost, workCost, equipmentCost);
+            
+            // Показываем уведомление
+            showToast('Смета рассчитана!', 1500);
         }
         
         // Обновление сводной таблицы
