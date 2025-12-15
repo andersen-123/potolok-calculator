@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PotolokForLife - Калькулятор натяжных потолков</title>
+    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Стили остаются без изменений */
         :root {
             --primary-color: #1e3c72;
             --secondary-color: #2a5298;
@@ -124,7 +126,6 @@
             border-radius: 8px;
             transition: var(--transition);
             font-size: 0.9rem;
-            cursor: pointer;
         }
         
         .nav-tab.active {
@@ -225,7 +226,6 @@
             font-size: 0.9rem;
             transition: var(--transition);
             text-align: center;
-            cursor: pointer;
         }
         
         .system-btn.active {
@@ -377,9 +377,6 @@
             background: #f8f9fa;
             color: var(--primary-color);
             font-weight: 700;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
         
         .total-row {
@@ -456,6 +453,17 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
+        }
+        
+        .swipe-hint {
+            text-align: center;
+            color: #666;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
         
         .telegram-status {
@@ -648,13 +656,20 @@
         <div class="tab-content" id="services-tab">
             <div class="card">
                 <h2 class="card-title"><i class="fas fa-tools"></i> Основные работы</h2>
-                <div class="services-list" id="basicServicesList"></div>
+                
+                <div class="services-list" id="basicServicesList">
+                    <!-- Basic services will be loaded here -->
+                </div>
                 
                 <h2 class="card-title"><i class="fas fa-lightbulb"></i> Освещение</h2>
-                <div class="services-list" id="lightingServicesList"></div>
+                <div class="services-list" id="lightingServicesList">
+                    <!-- Lighting services will be loaded here -->
+                </div>
                 
                 <h2 class="card-title"><i class="fas fa-plus-circle"></i> Дополнительные работы</h2>
-                <div class="services-list" id="additionalServicesList"></div>
+                <div class="services-list" id="additionalServicesList">
+                    <!-- Additional services will be loaded here -->
+                </div>
                 
                 <div class="action-buttons">
                     <button class="btn btn-primary" id="calculateBtn2">
@@ -706,7 +721,7 @@
                 
                 <h2 class="card-title"><i class="fas fa-list-alt"></i> Детализация сметы</h2>
                 <div class="summary-table-container">
-                    <table class="summary-table">
+                    <table class="summary-table" id="summaryTable">
                         <thead>
                             <tr>
                                 <th>Наименование</th>
@@ -756,6 +771,7 @@
     </div>
 
     <script>
+        // Данные систем
         const systemsData = {
             garpun: {
                 name: "Гарпунная система",
@@ -799,6 +815,7 @@
         let selectedServices = [];
         let tg = null;
 
+        // Инициализация
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 initializeTelegram();
@@ -827,7 +844,510 @@
         }
 
         function initializeNavigation() {
-            const navTabs = document.querySelectorAll('.nav-tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            navTabs
+            try {
+                const navTabs = document.querySelectorAll('.nav-tab');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                navTabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const targetTab = this.dataset.tab;
+                        
+                        navTabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        tabContents.forEach(content => {
+                            content.classList.remove('active');
+                            if (content.id === `${targetTab}-tab`) {
+                                content.classList.add('active');
+                            }
+                        });
+                        
+                        if (targetTab === 'results') {
+                            calculateEstimate();
+                        }
+                    });
+                });
+            } catch (error) {
+                console.error('Ошибка навигации:', error);
+            }
+        }
+
+        function initializeSystemSelector() {
+            try {
+                document.querySelectorAll('.system-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.system-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        currentSystem = this.dataset.system;
+                        loadServices();
+                        calculateEstimate();
+                        showToast(`Система: ${systemsData[currentSystem].name}`);
+                    });
+                });
+            } catch (error) {
+                console.error('Ошибка выбора системы:', error);
+            }
+        }
+
+        function loadServices() {
+            try {
+                const system = systemsData[currentSystem];
+                if (!system) return;
+                
+                // Основные услуги
+                const basicList = document.getElementById('basicServicesList');
+                if (basicList) {
+                    let basicHtml = '';
+                    system.basicServices.forEach(service => {
+                        basicHtml += `
+                            <div class="service-item">
+                                <div class="service-info">
+                                    <div class="service-name">${service.name}</div>
+                                    <div class="service-unit">${service.unit}</div>
+                                </div>
+                                <div class="service-controls">
+                                    <div class="service-price">${service.price} руб.</div>
+                                    <input type="number" class="quantity-input" 
+                                           data-id="${service.id}" data-type="basic"
+                                           min="0" value="0">
+                                </div>
+                            </div>
+                        `;
+                    });
+                    basicList.innerHTML = basicHtml;
+                }
+                
+                // Освещение
+                const lightingList = document.getElementById('lightingServicesList');
+                if (lightingList) {
+                    let lightingHtml = '';
+                    system.lightingServices.forEach(service => {
+                        lightingHtml += `
+                            <div class="service-item">
+                                <div class="service-info">
+                                    <div class="service-name">${service.name}</div>
+                                    <div class="service-unit">${service.unit}</div>
+                                </div>
+                                <div class="service-controls">
+                                    <div class="service-price">${service.price} руб.</div>
+                                    <input type="number" class="quantity-input" 
+                                           data-id="${service.id}" data-type="lighting"
+                                           min="0" value="0">
+                                </div>
+                            </div>
+                        `;
+                    });
+                    lightingList.innerHTML = lightingHtml;
+                }
+                
+                // Дополнительные услуги
+                const additionalList = document.getElementById('additionalServicesList');
+                if (additionalList) {
+                    let additionalHtml = '';
+                    system.additionalServices.forEach(service => {
+                        additionalHtml += `
+                            <div class="service-item">
+                                <div class="service-info">
+                                    <div class="service-name">${service.name}</div>
+                                    <div class="service-unit">${service.unit}</div>
+                                </div>
+                                <div class="service-controls">
+                                    <div class="service-price">${service.price} руб.</div>
+                                    <input type="number" class="quantity-input" 
+                                           data-id="${service.id}" data-type="additional"
+                                           min="0" value="0">
+                                </div>
+                            </div>
+                        `;
+                    });
+                    additionalList.innerHTML = additionalHtml;
+                }
+                
+                // Добавляем обработчики для новых инпутов
+                document.querySelectorAll('.quantity-input').forEach(input => {
+                    input.addEventListener('input', calculateEstimate);
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки услуг:', error);
+            }
+        }
+
+        function setupEventListeners() {
+            try {
+                // Кнопки расчета
+                const calculateBtns = ['calculateBtn', 'calculateBtn2', 'calculateBtn3'];
+                calculateBtns.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.addEventListener('click', calculateEstimate);
+                });
+                
+                // Кнопки сброса
+                const resetBtns = ['resetBtn', 'resetBtn2', 'resetBtn3'];
+                resetBtns.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.addEventListener('click', resetCalculator);
+                });
+                
+                // Кнопки сохранения
+                const saveBtns = ['saveBtn', 'saveBtn2', 'saveBtn3'];
+                saveBtns.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.addEventListener('click', saveEstimate);
+                });
+                
+                // Кнопки отправки
+                const whatsappBtn = document.getElementById('whatsappBtn');
+                if (whatsappBtn) whatsappBtn.addEventListener('click', sendToWhatsApp);
+                
+                const telegramBtn = document.getElementById('telegramBtn');
+                if (telegramBtn) telegramBtn.addEventListener('click', sendToTelegram);
+                
+                // Поля ввода
+                const areaInput = document.getElementById('area');
+                const perimeterInput = document.getElementById('perimeter');
+                if (areaInput) areaInput.addEventListener('input', calculateEstimate);
+                if (perimeterInput) perimeterInput.addEventListener('input', calculateEstimate);
+                
+                // Защита от отрицательных значений
+                document.addEventListener('input', function(e) {
+                    if (e.target.type === 'number' && e.target.value < 0) {
+                        e.target.value = 0;
+                        calculateEstimate();
+                    }
+                });
+            } catch (error) {
+                console.error('Ошибка настройки обработчиков:', error);
+            }
+        }
+
+        function calculateEstimate() {
+            try {
+                const system = systemsData[currentSystem];
+                if (!system) return;
+                
+                const area = parseFloat(document.getElementById('area').value) || 0;
+                const perimeter = parseFloat(document.getElementById('perimeter').value) || 0;
+                
+                selectedServices = [];
+                
+                // Собираем все выбранные услуги
+                document.querySelectorAll('.quantity-input').forEach(input => {
+                    const quantity = parseInt(input.value) || 0;
+                    if (quantity > 0) {
+                        const id = parseInt(input.dataset.id);
+                        const type = input.dataset.type;
+                        
+                        let service;
+                        if (type === 'basic') service = system.basicServices.find(s => s.id === id);
+                        else if (type === 'lighting') service = system.lightingServices.find(s => s.id === id);
+                        else if (type === 'additional') service = system.additionalServices.find(s => s.id === id);
+                        
+                        if (service) {
+                            selectedServices.push({
+                                ...service,
+                                quantity,
+                                total: service.price * quantity
+                            });
+                        }
+                    }
+                });
+                
+                // Автоматически добавляем основные элементы
+                if (area > 0) {
+                    const canvasService = system.basicServices.find(s => s.id === 1);
+                    if (canvasService && !selectedServices.some(s => s.id === 1)) {
+                        const canvasInput = document.querySelector('.quantity-input[data-id="1"]');
+                        if (canvasInput) canvasInput.value = area;
+                        
+                        selectedServices.push({
+                            ...canvasService,
+                            quantity: area,
+                            total: canvasService.price * area
+                        });
+                    }
+                }
+                
+                if (perimeter > 0) {
+                    const profileService = system.basicServices.find(s => s.id === 2);
+                    if (profileService && !selectedServices.some(s => s.id === 2)) {
+                        const profileInput = document.querySelector('.quantity-input[data-id="2"]');
+                        if (profileInput) profileInput.value = perimeter;
+                        
+                        selectedServices.push({
+                            ...profileService,
+                            quantity: perimeter,
+                            total: profileService.price * perimeter
+                        });
+                    }
+                    
+                    const insertService = system.basicServices.find(s => s.id === 3);
+                    if (insertService && !selectedServices.some(s => s.id === 3)) {
+                        const insertInput = document.querySelector('.quantity-input[data-id="3"]');
+                        if (insertInput) insertInput.value = perimeter;
+                        
+                        selectedServices.push({
+                            ...insertService,
+                            quantity: perimeter,
+                            total: insertService.price * perimeter
+                        });
+                    }
+                }
+                
+                // Расчет сумм
+                let materialsCost = 0;
+                let workCost = 0;
+                
+                selectedServices.forEach(service => {
+                    materialsCost += service.basePrice * service.quantity;
+                    workCost += (service.price - service.basePrice) * service.quantity;
+                });
+                
+                const totalCost = materialsCost + workCost;
+                
+                // Обновляем интерфейс
+                const materialsCostEl = document.getElementById('materialsCost');
+                const workCostEl = document.getElementById('workCost');
+                const totalCostEl = document.getElementById('totalCost');
+                const prepaymentEl = document.getElementById('prepaymentAmount');
+                const finalPaymentEl = document.getElementById('finalPaymentAmount');
+                
+                if (materialsCostEl) materialsCostEl.textContent = formatCurrency(materialsCost);
+                if (workCostEl) workCostEl.textContent = formatCurrency(workCost);
+                if (totalCostEl) totalCostEl.textContent = formatCurrency(totalCost);
+                
+                // Оплата
+                const prepayment = totalCost * 0.5;
+                const finalPayment = totalCost * 0.5;
+                if (prepaymentEl) prepaymentEl.textContent = formatCurrency(prepayment);
+                if (finalPaymentEl) finalPaymentEl.textContent = formatCurrency(finalPayment);
+                
+                // Обновляем таблицу
+                updateSummaryTable();
+                
+            } catch (error) {
+                console.error('Ошибка расчета:', error);
+                showToast('Ошибка расчета');
+            }
+        }
+
+        function updateSummaryTable() {
+            try {
+                const tableBody = document.getElementById('summaryTableBody');
+                if (!tableBody) return;
+                
+                tableBody.innerHTML = '';
+                
+                if (selectedServices.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                <i class="fas fa-clipboard-list"></i>
+                                <p>Добавьте элементы для расчета</p>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                selectedServices.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.name}</td>
+                        <td>${item.quantity} ${item.unit}</td>
+                        <td>${formatCurrency(item.price)}</td>
+                        <td>${formatCurrency(item.total)}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                const totalCost = selectedServices.reduce((sum, s) => sum + s.total, 0);
+                const totalRow = document.createElement('tr');
+                totalRow.className = 'total-row';
+                totalRow.innerHTML = `
+                    <td colspan="3"><strong>ИТОГО:</strong></td>
+                    <td><strong>${formatCurrency(totalCost)}</strong></td>
+                `;
+                tableBody.appendChild(totalRow);
+            } catch (error) {
+                console.error('Ошибка обновления таблицы:', error);
+            }
+        }
+
+        function saveEstimate() {
+            try {
+                const estimate = {
+                    id: Date.now(),
+                    date: new Date().toLocaleString('ru-RU'),
+                    system: systemsData[currentSystem]?.name || 'Неизвестно',
+                    address: document.getElementById('objectAddress')?.value || 'Не указан',
+                    area: document.getElementById('area')?.value || 0,
+                    items: selectedServices,
+                    total: selectedServices.reduce((sum, item) => sum + (item.total || 0), 0)
+                };
+                
+                // Сохраняем в localStorage
+                const historyStr = localStorage.getItem('potolokHistory');
+                const history = historyStr ? JSON.parse(historyStr) : [];
+                
+                if (Array.isArray(history)) {
+                    history.unshift(estimate);
+                    if (history.length > 50) history.length = 50;
+                    localStorage.setItem('potolokHistory', JSON.stringify(history));
+                    showToast('✅ Смета сохранена!');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+                showToast('❌ Ошибка сохранения');
+            }
+        }
+
+        function sendToWhatsApp() {
+            try {
+                const address = document.getElementById('objectAddress')?.value || 'Не указан';
+                const area = document.getElementById('area')?.value || 0;
+                const total = selectedServices.reduce((sum, item) => sum + (item.total || 0), 0);
+                
+                const message = `🏠 Смета на потолки 🏠
+
+📍 Адрес: ${address}
+📏 Площадь: ${area} м²
+💰 Стоимость: ${formatCurrency(total)}
+
+📞 Для заказа: 8(977)531-10-99
+✉️ Potolokforlife@yandex.ru
+
+Смета создана в PotolokForLife`;
+                
+                const phone = "79775311099";
+                const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+                
+                window.open(url, '_blank');
+                showToast('📲 Открываю WhatsApp...');
+                
+            } catch (error) {
+                console.error('Ошибка WhatsApp:', error);
+                showToast('❌ Ошибка отправки');
+            }
+        }
+
+        function sendToTelegram() {
+            try {
+                const address = document.getElementById('objectAddress')?.value || 'Не указан';
+                const area = document.getElementById('area')?.value || 0;
+                const total = selectedServices.reduce((sum, item) => sum + (item.total || 0), 0);
+                
+                if (tg && tg.sendData) {
+                    // Если в Telegram Web App
+                    const message = `Новая смета на натяжные потолки:
+                    
+Адрес: ${address}
+Площадь: ${area} м²
+Система: ${systemsData[currentSystem]?.name || 'Неизвестно'}
+Итоговая стоимость: ${formatCurrency(total)}
+
+Дата: ${new Date().toLocaleString('ru-RU')}`;
+                    
+                    tg.sendData(JSON.stringify({
+                        type: 'estimate',
+                        address: address,
+                        area: area,
+                        system: systemsData[currentSystem]?.name || 'Неизвестно',
+                        total: total,
+                        date: new Date().toISOString()
+                    }));
+                    
+                    if (tg.showAlert) {
+                        tg.showAlert('✅ Смета отправлена! Менеджер свяжется с вами в течение 30 минут.');
+                    }
+                    
+                } else {
+                    // Если в обычном браузере
+                    const message = `Смета на натяжные потолки:
+                    
+Адрес: ${address}
+Площадь: ${area} м²
+Стоимость: ${formatCurrency(total)}
+
+Для заказа: 8(977)531-10-99`;
+                    
+                    // Открываем Telegram с сообщением
+                    const url = `https://t.me/share/url?url=&text=${encodeURIComponent(message)}`;
+                    window.open(url, '_blank');
+                    showToast('📲 Открываю Telegram...');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка Telegram:', error);
+                showToast('❌ Ошибка отправки');
+            }
+        }
+
+        function resetCalculator() {
+            try {
+                if (confirm('Вы уверены, что хотите сбросить все данные?')) {
+                    // Сброс полей ввода
+                    const inputs = ['area', 'perimeter', 'height', 'objectAddress', 'roomCount'];
+                    inputs.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            if (id === 'roomCount') el.value = 1;
+                            else if (id === 'objectAddress') el.value = '';
+                            else el.value = 0;
+                        }
+                    });
+                    
+                    // Сброс количества услуг
+                    document.querySelectorAll('.quantity-input').forEach(input => {
+                        input.value = 0;
+                    });
+                    
+                    // Сброс системы
+                    document.querySelectorAll('.system-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    const defaultBtn = document.querySelector('.system-btn[data-system="garpun"]');
+                    if (defaultBtn) defaultBtn.classList.add('active');
+                    currentSystem = 'garpun';
+                    
+                    loadServices();
+                    calculateEstimate();
+                    
+                    showToast('Данные сброшены');
+                }
+            } catch (error) {
+                console.error('Ошибка сброса:', error);
+                showToast('Ошибка сброса данных');
+            }
+        }
+
+        function formatCurrency(amount) {
+            try {
+                return new Intl.NumberFormat('ru-RU', {
+                    style: 'currency',
+                    currency: 'RUB',
+                    minimumFractionDigits: 0
+                }).format(amount || 0).replace('RUB', 'руб.');
+            } catch (error) {
+                return '0 руб.';
+            }
+        }
+
+        function showToast(message) {
+            try {
+                const toast = document.getElementById('toast');
+                if (!toast) return;
+                
+                toast.textContent = message;
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            } catch (error) {
+                console.error('Ошибка показа уведомления:', error);
+            }
+        }
+    </script>
+</body>
+</html>
