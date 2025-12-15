@@ -38,41 +38,42 @@ const systemsData = {
     }
 };
 
-// Конфигурация бота
-const BOT_CONFIG = {
-    // Замените на реальный URL вашего сервера
-    SERVER_URL: 'https://your-server.com/bot',
-    // Или используйте локальный сервер для разработки
-    LOCAL_SERVER: 'http://localhost:3000/bot',
-    
-    // Токен бота (замените на реальный)
-    BOT_TOKEN: 'YOUR_BOT_TOKEN_HERE',
-    
-    // ID чата для сохранения смет (можно получить через @userinfobot)
-    ADMIN_CHAT_ID: 'YOUR_CHAT_ID_HERE'
-};
-
 // Глобальные переменные
 let currentSystem = 'garpun';
 let selectedServices = [];
-let tg = null;
 let currentEstimate = null;
-let estimatesHistory = [];
+let tg = null;
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', function() {
     try {
-        console.log('Initializing application...');
+        console.log('🚀 Инициализация приложения...');
+        
+        // Инициализация Telegram Web App
         initializeTelegram();
+        
+        // Инициализация навигации
         initializeNavigation();
+        
+        // Инициализация системы
         initializeSystemSelector();
+        
+        // Загрузка услуг
         loadServices();
+        
+        // Настройка обработчиков событий
         setupEventListeners();
+        
+        // Расчет начальной сметы
         calculateEstimate();
-        updateDocumentPreview();
+        
+        // Загрузка истории
         loadHistory();
+        
+        console.log('✅ Приложение успешно загружено');
+        
     } catch (error) {
-        console.error('Ошибка инициализации:', error);
+        console.error('❌ Ошибка инициализации:', error);
         showToast('Ошибка загрузки приложения');
     }
 });
@@ -82,112 +83,82 @@ function initializeTelegram() {
     try {
         if (window.Telegram && window.Telegram.WebApp) {
             tg = window.Telegram.WebApp;
-            console.log('Telegram Web App detected:', tg.initData);
             
             // Расширяем на весь экран
             tg.expand();
             
-            // Показываем кнопку закрытия
+            // Показываем кнопку "Назад"
             tg.BackButton.show();
             tg.BackButton.onClick(() => {
                 tg.close();
             });
             
-            // Включаем подтверждение закрытия
-            tg.enableClosingConfirmation();
-            
             // Показываем статус Telegram
-            const statusEl = document.getElementById('telegramStatus');
-            if (statusEl) statusEl.style.display = 'block';
+            document.getElementById('telegramStatus').style.display = 'block';
             
-            // Получаем данные пользователя
-            const user = tg.initDataUnsafe?.user;
-            if (user) {
-                console.log('User data:', user);
-                // Автозаполняем имя пользователя если поле пустое
-                const clientNameInput = document.getElementById('clientName');
-                if (clientNameInput && !clientNameInput.value) {
-                    if (user.first_name || user.last_name) {
-                        clientNameInput.value = `${user.first_name || ''} ${user.last_name || ''}`.trim();
-                    }
-                }
-            }
-            
-            // Устанавливаем тему
-            if (tg.colorScheme === 'dark') {
-                document.body.classList.add('dark-theme');
-            }
+            console.log('🤖 Telegram Web App подключен');
             
         } else {
-            console.log('Running outside Telegram Web App');
+            console.log('🌐 Запущено в браузере');
         }
     } catch (error) {
-        console.warn('Ошибка инициализации Telegram:', error);
+        console.warn('⚠️ Ошибка Telegram Web App:', error);
     }
 }
 
 // Инициализация навигации
 function initializeNavigation() {
-    try {
-        const navTabs = document.querySelectorAll('.nav-tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        
-        navTabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                const targetTab = this.dataset.tab;
-                
-                // Обновляем активные табы
-                navTabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                tabContents.forEach(content => {
-                    content.classList.remove('active');
-                    if (content.id === `${targetTab}-tab`) {
-                        content.classList.add('active');
-                    }
-                });
-                
-                // Обновляем контент для активной вкладки
-                switch(targetTab) {
-                    case 'results':
-                        calculateEstimate();
-                        updateDocumentPreview();
-                        break;
-                    case 'history':
-                        loadHistory();
-                        break;
+    const navTabs = document.querySelectorAll('.nav-tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    navTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            
+            // Обновляем активные табы
+            navTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+                if (content.id === `${targetTab}-tab`) {
+                    content.classList.add('active');
                 }
             });
+            
+            // Действия при переключении вкладок
+            if (targetTab === 'results') {
+                calculateEstimate();
+            } else if (targetTab === 'history') {
+                loadHistory();
+            }
         });
-    } catch (error) {
-        console.error('Ошибка навигации:', error);
-    }
+    });
 }
 
 // Инициализация выбора системы
 function initializeSystemSelector() {
-    try {
-        document.querySelectorAll('.system-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.system-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                currentSystem = this.dataset.system;
-                loadServices();
-                calculateEstimate();
-                updateDocumentPreview();
-                showToast(`Система: ${systemsData[currentSystem].name}`);
-            });
+    document.querySelectorAll('.system-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.system-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentSystem = this.dataset.system;
+            
+            // Перезагружаем услуги для выбранной системы
+            loadServices();
+            
+            // Пересчитываем смету
+            calculateEstimate();
+            
+            showToast(`Система: ${systemsData[currentSystem].name}`);
         });
-    } catch (error) {
-        console.error('Ошибка выбора системы:', error);
-    }
+    });
 }
 
 // Загрузка услуг
 function loadServices() {
     try {
         const system = systemsData[currentSystem];
-        if (!system) return;
         
         // Загрузка основных услуг
         loadServiceList('basicServicesList', system.basicServices, 'basic');
@@ -198,12 +169,12 @@ function loadServices() {
         // Загрузка дополнительных услуг
         loadServiceList('additionalServicesList', system.additionalServices, 'additional');
         
-        // Обновляем обработчики
+        // Обновляем обработчики изменения количества
         updateQuantityInputListeners();
         
     } catch (error) {
         console.error('Ошибка загрузки услуг:', error);
-        showToast('Ошибка загрузки списка услуг');
+        showToast('Ошибка загрузки услуг');
     }
 }
 
@@ -217,7 +188,7 @@ function loadServiceList(elementId, services, type) {
         const existingQuantity = getExistingQuantity(service.id, type);
         
         html += `
-            <div class="service-item">
+            <div class="service-item" role="listitem">
                 <div class="service-info">
                     <div class="service-name">${service.name}</div>
                     <div class="service-unit">${service.unit}</div>
@@ -226,7 +197,8 @@ function loadServiceList(elementId, services, type) {
                     <div class="service-price">${formatCurrency(service.price)}</div>
                     <input type="number" class="quantity-input" 
                            data-id="${service.id}" data-type="${type}"
-                           min="0" value="${existingQuantity}">
+                           min="0" value="${existingQuantity}"
+                           aria-label="Количество ${service.name}">
                 </div>
             </div>
         `;
@@ -245,16 +217,17 @@ function getExistingQuantity(id, type) {
 function updateQuantityInputListeners() {
     document.querySelectorAll('.quantity-input').forEach(input => {
         // Удаляем старые обработчики
-        input.removeEventListener('input', handleQuantityChange);
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        
         // Добавляем новый обработчик
-        input.addEventListener('input', handleQuantityChange);
+        newInput.addEventListener('input', handleQuantityChange);
     });
 }
 
 // Обработчик изменения количества
 function handleQuantityChange() {
     calculateEstimate();
-    updateDocumentPreview();
 }
 
 // Настройка обработчиков событий
@@ -263,32 +236,42 @@ function setupEventListeners() {
         // Кнопки расчета
         ['calculateBtn', 'calculateBtn2', 'calculateBtn3'].forEach(id => {
             const btn = document.getElementById(id);
-            if (btn) btn.addEventListener('click', () => {
-                calculateEstimate();
-                updateDocumentPreview();
-            });
+            if (btn) {
+                btn.addEventListener('click', calculateEstimate);
+            }
         });
         
         // Кнопки сброса
         ['resetBtn', 'resetBtn2', 'resetBtn3'].forEach(id => {
             const btn = document.getElementById(id);
-            if (btn) btn.addEventListener('click', resetCalculator);
+            if (btn) {
+                btn.addEventListener('click', resetCalculator);
+            }
         });
         
         // Кнопки сохранения
         ['saveBtn', 'saveBtn2', 'saveBtn3'].forEach(id => {
             const btn = document.getElementById(id);
-            if (btn) btn.addEventListener('click', saveEstimateToBot);
+            if (btn) {
+                btn.addEventListener('click', saveEstimate);
+            }
         });
         
-        // Поля ввода
+        // Кнопки экспорта
+        document.getElementById('exportPdfBtn').addEventListener('click', exportAsPDF);
+        document.getElementById('exportImageBtn').addEventListener('click', exportAsImage);
+        document.getElementById('exportTelegramBtn').addEventListener('click', shareToTelegram);
+        document.getElementById('exportWhatsappBtn').addEventListener('click', shareToWhatsApp);
+        
+        // Кнопки истории
+        document.getElementById('refreshHistoryBtn').addEventListener('click', loadHistory);
+        document.getElementById('clearHistoryBtn').addEventListener('click', clearHistory);
+        
+        // Основные поля ввода
         ['area', 'perimeter', 'objectAddress', 'clientName', 'clientPhone'].forEach(id => {
             const input = document.getElementById(id);
             if (input) {
-                input.addEventListener('input', () => {
-                    calculateEstimate();
-                    updateDocumentPreview();
-                });
+                input.addEventListener('input', calculateEstimate);
             }
         });
         
@@ -297,8 +280,12 @@ function setupEventListeners() {
             if (e.target.type === 'number' && e.target.value < 0) {
                 e.target.value = 0;
                 calculateEstimate();
-                updateDocumentPreview();
             }
+        });
+        
+        // Сохранение при закрытии
+        window.addEventListener('beforeunload', function() {
+            saveCurrentEstimateToHistory();
         });
         
     } catch (error) {
@@ -306,19 +293,17 @@ function setupEventListeners() {
     }
 }
 
-// Расчет сметы
+// Основная функция расчета
 function calculateEstimate() {
     try {
         const system = systemsData[currentSystem];
-        if (!system) return;
-        
         const area = parseFloat(document.getElementById('area').value) || 0;
         const perimeter = parseFloat(document.getElementById('perimeter').value) || 0;
         
-        // Собираем все услуги
+        // Собираем выбранные услуги
         selectedServices = collectSelectedServices(system);
         
-        // Автоматически добавляем основные элементы если указана площадь/периметр
+        // Добавляем автоматические услуги
         addAutomaticServices(system, area, perimeter);
         
         // Обновляем интерфейс
@@ -367,7 +352,7 @@ function collectSelectedServices(system) {
 
 // Добавление автоматических услуг
 function addAutomaticServices(system, area, perimeter) {
-    // Полотно
+    // Полотно (если указана площадь)
     if (area > 0 && !selectedServices.some(s => s.id === 1)) {
         const canvasService = system.basicServices.find(s => s.id === 1);
         if (canvasService) {
@@ -377,44 +362,50 @@ function addAutomaticServices(system, area, perimeter) {
                 quantity: area,
                 total: canvasService.price * area
             });
+            
             // Обновляем поле ввода
             const canvasInput = document.querySelector('.quantity-input[data-id="1"]');
             if (canvasInput) canvasInput.value = area;
         }
     }
     
-    // Профиль
-    if (perimeter > 0 && !selectedServices.some(s => s.id === 2)) {
-        const profileService = system.basicServices.find(s => s.id === 2);
-        if (profileService) {
-            selectedServices.push({
-                ...profileService,
-                type: 'basic',
-                quantity: perimeter,
-                total: profileService.price * perimeter
-            });
-            const profileInput = document.querySelector('.quantity-input[data-id="2"]');
-            if (profileInput) profileInput.value = perimeter;
+    // Профиль и вставка (если указан периметр)
+    if (perimeter > 0) {
+        // Профиль
+        if (!selectedServices.some(s => s.id === 2)) {
+            const profileService = system.basicServices.find(s => s.id === 2);
+            if (profileService) {
+                selectedServices.push({
+                    ...profileService,
+                    type: 'basic',
+                    quantity: perimeter,
+                    total: profileService.price * perimeter
+                });
+                
+                const profileInput = document.querySelector('.quantity-input[data-id="2"]');
+                if (profileInput) profileInput.value = perimeter;
+            }
         }
-    }
-    
-    // Вставка
-    if (perimeter > 0 && !selectedServices.some(s => s.id === 3)) {
-        const insertService = system.basicServices.find(s => s.id === 3);
-        if (insertService) {
-            selectedServices.push({
-                ...insertService,
-                type: 'basic',
-                quantity: perimeter,
-                total: insertService.price * perimeter
-            });
-            const insertInput = document.querySelector('.quantity-input[data-id="3"]');
-            if (insertInput) insertInput.value = perimeter;
+        
+        // Вставка
+        if (!selectedServices.some(s => s.id === 3)) {
+            const insertService = system.basicServices.find(s => s.id === 3);
+            if (insertService) {
+                selectedServices.push({
+                    ...insertService,
+                    type: 'basic',
+                    quantity: perimeter,
+                    total: insertService.price * perimeter
+                });
+                
+                const insertInput = document.querySelector('.quantity-input[data-id="3"]');
+                if (insertInput) insertInput.value = perimeter;
+            }
         }
     }
 }
 
-// Обновление итогов в интерфейсе
+// Обновление интерфейса с итогами
 function updateInterfaceTotals() {
     const totalCost = selectedServices.reduce((sum, s) => sum + s.total, 0);
     const materialsCost = selectedServices.reduce((sum, s) => sum + (s.basePrice * s.quantity), 0);
@@ -425,17 +416,16 @@ function updateInterfaceTotals() {
     document.getElementById('workCost').textContent = formatCurrency(workCost);
     document.getElementById('totalCost').textContent = formatCurrency(totalCost);
     
-    // Обновляем оплату
+    // Обновляем информацию об оплате
     const prepayment = totalCost * 0.5;
     const finalPayment = totalCost * 0.5;
     document.getElementById('prepaymentAmount').textContent = formatCurrency(prepayment);
     document.getElementById('finalPaymentAmount').textContent = formatCurrency(finalPayment);
 }
 
-// Обновление таблицы
+// Обновление таблицы сметы
 function updateSummaryTable() {
     const tableBody = document.getElementById('summaryTableBody');
-    if (!tableBody) return;
     
     if (selectedServices.length === 0) {
         tableBody.innerHTML = `
@@ -506,637 +496,65 @@ function saveCurrentEstimate() {
         prepayment: totalCost * 0.5,
         finalPayment: totalCost * 0.5
     };
-    
-    // Сохраняем в localStorage для истории
-    saveToLocalHistory(currentEstimate);
 }
 
-// Сохранение в локальную историю
-function saveToLocalHistory(estimate) {
+// Сохранение сметы в историю
+function saveEstimate() {
     try {
-        let history = JSON.parse(localStorage.getItem('potolokHistory') || '[]');
-        history = history.filter(item => item.id !== estimate.id);
-        history.unshift(estimate);
+        if (!currentEstimate) {
+            showToast('❌ Сначала создайте смету');
+            return;
+        }
         
-        if (history.length > 100) history.length = 100;
+        // Сохраняем в localStorage
+        let history = JSON.parse(localStorage.getItem('potolokHistory') || '[]');
+        
+        // Проверяем, нет ли уже такой сметы
+        history = history.filter(item => item.id !== currentEstimate.id);
+        
+        // Добавляем новую смету в начало
+        history.unshift(currentEstimate);
+        
+        // Ограничиваем историю 100 записями
+        if (history.length > 100) {
+            history = history.slice(0, 100);
+        }
         
         localStorage.setItem('potolokHistory', JSON.stringify(history));
         
+        showToast('✅ Смета сохранена в историю');
+        
+        // Обновляем список истории
+        loadHistory();
+        
     } catch (error) {
-        console.error('Ошибка сохранения в историю:', error);
+        console.error('Ошибка сохранения:', error);
+        showToast('❌ Ошибка сохранения сметы');
     }
 }
 
-// Обновление предпросмотра документа
-function updateDocumentPreview() {
-    try {
-        const preview = document.getElementById('documentPreview');
-        if (!preview || !currentEstimate) return;
-        
-        preview.innerHTML = generateDocumentHTML(currentEstimate);
-        
-    } catch (error) {
-        console.error('Ошибка обновления предпросмотра:', error);
-    }
-}
-
-// Генерация HTML документа
-function generateDocumentHTML(estimate) {
-    const date = new Date(estimate.timestamp);
-    const formattedDate = date.toLocaleDateString('ru-RU', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
-    
-    const estimateNumber = 'СМ-' + date.getFullYear() + '-' + 
-        String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(date.getDate()).padStart(2, '0') + '-' + 
-        String(date.getHours()).padStart(2, '0') + 
-        String(date.getMinutes()).padStart(2, '0');
-    
-    let itemsHtml = '';
-    estimate.items.forEach((item, index) => {
-        itemsHtml += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${item.name}</td>
-                <td>${item.unit}</td>
-                <td>${item.quantity}</td>
-                <td>${formatCurrency(item.price)}</td>
-                <td>${formatCurrency(item.total)}</td>
-            </tr>
-        `;
-    });
-    
-    const totalInWords = numberToWords(estimate.total);
-    
-    return `
-        <div class="document-header">
-            <div class="document-title">СМЕТА № ${estimateNumber}</div>
-            <div class="document-subtitle">на выполнение работ по монтажу натяжных потолков</div>
-        </div>
-        <div class="document-content">
-            <div class="document-section">
-                <div class="document-section-title">1. ОБЩИЕ СВЕДЕНИЯ</div>
-                <div class="document-row">
-                    <div class="label">Дата составления:</div>
-                    <div class="value">${formattedDate}</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Заказчик:</div>
-                    <div class="value">${estimate.clientName || 'Не указано'}</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Телефон:</div>
-                    <div class="value">${estimate.clientPhone || 'Не указан'}</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Исполнитель:</div>
-                    <div class="value">PotolokForLife</div>
-                </div>
-            </div>
+// Сохранение при закрытии
+function saveCurrentEstimateToHistory() {
+    if (currentEstimate && selectedServices.length > 0) {
+        try {
+            let history = JSON.parse(localStorage.getItem('potolokHistory') || '[]');
+            history.unshift(currentEstimate);
             
-            <div class="document-section">
-                <div class="document-section-title">2. ХАРАКТЕРИСТИКИ ОБЪЕКТА</div>
-                <div class="document-row">
-                    <div class="label">Адрес объекта:</div>
-                    <div class="value">${estimate.address}</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Тип объекта:</div>
-                    <div class="value">${estimate.objectType}</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Площадь потолка:</div>
-                    <div class="value">${estimate.area} м²</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Периметр помещения:</div>
-                    <div class="value">${estimate.perimeter} м.п.</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Система монтажа:</div>
-                    <div class="value">${estimate.system}</div>
-                </div>
-            </div>
-            
-            <div class="document-section">
-                <div class="document-section-title">3. ПЕРЕЧЕНЬ РАБОТ И МАТЕРИАЛОВ</div>
-                <table class="document-table">
-                    <thead>
-                        <tr>
-                            <th>№</th>
-                            <th>Наименование работ/материалов</th>
-                            <th>Ед. изм.</th>
-                            <th>Кол-во</th>
-                            <th>Цена за ед., руб.</th>
-                            <th>Стоимость, руб.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${itemsHtml || '<tr><td colspan="6" style="text-align: center;">Нет данных</td></tr>'}
-                        <tr class="total-row">
-                            <td colspan="5" style="text-align: right;"><strong>ВСЕГО:</strong></td>
-                            <td><strong>${formatCurrency(estimate.total)}</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="document-section">
-                <div class="document-section-title">4. УСЛОВИЯ ОПЛАТЫ</div>
-                <div class="document-row">
-                    <div class="label">Предоплата (50%):</div>
-                    <div class="value">${formatCurrency(estimate.prepayment)}</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Окончательный расчет (50%):</div>
-                    <div class="value">${formatCurrency(estimate.finalPayment)}</div>
-                </div>
-                <div class="document-row">
-                    <div class="label">Всего к оплате:</div>
-                    <div class="value">${formatCurrency(estimate.total)} (${totalInWords})</div>
-                </div>
-            </div>
-            
-            <div class="document-signature">
-                <div class="signature-line">
-                    <div class="signature-block">
-                        <div class="signature-line-dashed"></div>
-                        <div class="signature-label">Исполнитель</div>
-                        <div class="signature-label">PotolokForLife</div>
-                    </div>
-                    <div class="signature-block">
-                        <div class="signature-line-dashed"></div>
-                        <div class="signature-label">Заказчик</div>
-                        <div class="signature-label">${estimate.clientName || '_________________________'}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="document-footer">
-            <div>Исполнитель: PotolokForLife | Тел: 8(977)531-10-99 | Email: Potolokforlife@yandex.ru</div>
-            <div>Адрес: г. Пушкино | Смета действительна в течение 30 дней</div>
-        </div>
-    `;
-}
-
-// Сохранение сметы в боте
-async function saveEstimateToBot() {
-    try {
-        if (!currentEstimate) {
-            showToast('❌ Сначала создайте смету');
-            return;
-        }
-        
-        showLoading('Сохраняем смету в боте...');
-        
-        if (tg && tg.sendData) {
-            // Отправляем данные через Telegram Web App
-            const estimateData = {
-                type: 'save_estimate',
-                estimate: currentEstimate,
-                user: tg.initDataUnsafe?.user || {},
-                timestamp: new Date().toISOString()
-            };
-            
-            tg.sendData(JSON.stringify(estimateData));
-            
-            setTimeout(() => {
-                hideLoading();
-                showToast('✅ Смета отправлена в бота!');
-            }, 1000);
-            
-        } else if (isBotServerAvailable()) {
-            // Отправляем на сервер бота
-            const response = await sendToBotServer(currentEstimate);
-            
-            hideLoading();
-            if (response.success) {
-                showToast('✅ Смета сохранена в базе бота!');
-                console.log('Сохраненная смета:', response.data);
-            } else {
-                showToast('❌ Ошибка сохранения: ' + response.error);
+            if (history.length > 100) {
+                history = history.slice(0, 100);
             }
             
-        } else {
-            // Локальное сохранение
-            hideLoading();
-            saveEstimateLocally();
-            showToast('✅ Смета сохранена локально');
+            localStorage.setItem('potolokHistory', JSON.stringify(history));
+        } catch (error) {
+            console.error('Ошибка автосохранения:', error);
         }
-        
-    } catch (error) {
-        console.error('Ошибка сохранения в боте:', error);
-        hideLoading();
-        showToast('❌ Ошибка сохранения');
     }
-}
-
-// Отправка в Telegram бота
-async function sendToTelegramBot() {
-    try {
-        if (!currentEstimate) {
-            showToast('❌ Сначала создайте смету');
-            return;
-        }
-        
-        showLoading('Отправляем смету в бота...');
-        
-        if (tg && tg.sendData) {
-            // Отправка через Telegram Web App
-            const estimateData = {
-                type: 'telegram_estimate',
-                estimate: currentEstimate,
-                format: 'full',
-                user: tg.initDataUnsafe?.user || {},
-                timestamp: new Date().toISOString()
-            };
-            
-            tg.sendData(JSON.stringify(estimateData));
-            
-            setTimeout(() => {
-                hideLoading();
-                showToast('✅ Смета отправлена в Telegram!');
-                
-                // Показываем уведомление в Telegram
-                if (tg.showAlert) {
-                    tg.showAlert('Смета отправлена! Она сохранена в базе бота и доступна в меню /estimates');
-                }
-            }, 1500);
-            
-        } else {
-            // Альтернативный метод
-            hideLoading();
-            const message = generateTelegramMessage(currentEstimate);
-            const url = `https://t.me/share/url?text=${encodeURIComponent(message)}`;
-            window.open(url, '_blank');
-            showToast('📲 Открываю Telegram...');
-        }
-        
-    } catch (error) {
-        console.error('Ошибка отправки в Telegram:', error);
-        hideLoading();
-        showToast('❌ Ошибка отправки');
-    }
-}
-
-// Генерация сообщения для Telegram
-function generateTelegramMessage(estimate) {
-    const date = new Date(estimate.timestamp);
-    const formattedDate = date.toLocaleDateString('ru-RU');
-    
-    let itemsText = '';
-    estimate.items.slice(0, 5).forEach((item, index) => {
-        itemsText += `${index + 1}. ${item.name}: ${item.quantity} ${item.unit} × ${formatCurrency(item.price)} = ${formatCurrency(item.total)}\n`;
-    });
-    
-    if (estimate.items.length > 5) {
-        itemsText += `... и еще ${estimate.items.length - 5} позиций\n`;
-    }
-    
-    return `🏠 СМЕТА НА НАТЯЖНЫЕ ПОТОЛКИ
-
-📅 Дата: ${formattedDate}
-👤 Клиент: ${estimate.clientName || 'Не указано'}
-📞 Телефон: ${estimate.clientPhone || 'Не указан'}
-📍 Адрес: ${estimate.address}
-📏 Площадь: ${estimate.area} м²
-🔧 Система: ${estimate.system}
-
-📋 ОСНОВНЫЕ ПОЗИЦИИ:
-${itemsText}
-
-💰 ИТОГО: ${formatCurrency(estimate.total)}
-💳 Предоплата: ${formatCurrency(estimate.prepayment)}
-💳 Окончательный расчет: ${formatCurrency(estimate.finalPayment)}
-
-🏢 Компания: PotolokForLife
-📞 Телефон: 8(977)531-10-99
-✉️ Email: Potolokforlife@yandex.ru
-
-#смета #потолки #${estimate.objectType}`;
-}
-
-// Отправка в WhatsApp
-async function sendToWhatsApp() {
-    try {
-        if (!currentEstimate) {
-            showToast('❌ Сначала создайте смету');
-            return;
-        }
-        
-        const phone = "79775311099";
-        const message = generateWhatsAppMessage(currentEstimate);
-        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        
-        window.open(url, '_blank');
-        showToast('📲 Открываю WhatsApp...');
-        
-    } catch (error) {
-        console.error('Ошибка WhatsApp:', error);
-        showToast('❌ Ошибка отправки');
-    }
-}
-
-// Генерация сообщения для WhatsApp
-function generateWhatsAppMessage(estimate) {
-    const date = new Date(estimate.timestamp);
-    const formattedDate = date.toLocaleDateString('ru-RU');
-    
-    return `Здравствуйте! 
-
-Отправляю вам смету на натяжные потолки:
-
-📅 Дата: ${formattedDate}
-👤 Клиент: ${estimate.clientName || 'Не указано'}
-📍 Адрес: ${estimate.address}
-📏 Площадь: ${estimate.area} м²
-💰 Общая стоимость: ${formatCurrency(estimate.total)}
-
-💳 Предоплата (50%): ${formatCurrency(estimate.prepayment)}
-💳 Окончательный расчет (50%): ${formatCurrency(estimate.finalPayment)}
-
-Для подтверждения заказа или уточнения деталей, свяжитесь с нами:
-
-📞 Телефон: 8(977)531-10-99
-✉️ Email: Potolokforlife@yandex.ru
-
-С уважением,
-PotolokForLife`;
-}
-
-// Экспорт как PDF
-async function exportAsPDF() {
-    try {
-        if (!currentEstimate) {
-            showToast('❌ Сначала создайте смету');
-            return;
-        }
-        
-        showLoading('Генерируем PDF документ...');
-        
-        // Создаем контейнер для экспорта
-        const exportHTML = generateExportHTML(currentEstimate);
-        const exportContainer = document.getElementById('exportContainer');
-        exportContainer.innerHTML = exportHTML;
-        
-        // Создаем изображение
-        const canvas = await html2canvas(exportContainer, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff'
-        });
-        
-        // Создаем PDF
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        
-        const imgData = canvas.toDataURL('image/png');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        
-        // Сохраняем
-        const fileName = `Смета_${currentEstimate.clientName || 'клиента'}_${Date.now()}.pdf`;
-        pdf.save(fileName);
-        
-        hideLoading();
-        showToast('✅ PDF сохранен!');
-        
-    } catch (error) {
-        console.error('Ошибка создания PDF:', error);
-        hideLoading();
-        showToast('❌ Ошибка создания PDF');
-    }
-}
-
-// Экспорт как изображение
-async function exportAsImage() {
-    try {
-        if (!currentEstimate) {
-            showToast('❌ Сначала создайте смету');
-            return;
-        }
-        
-        showLoading('Создаем изображение...');
-        
-        // Создаем контейнер для экспорта
-        const exportHTML = generateExportHTML(currentEstimate);
-        const exportContainer = document.getElementById('exportContainer');
-        exportContainer.innerHTML = exportHTML;
-        
-        // Создаем canvas
-        const canvas = await html2canvas(exportContainer, {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            backgroundColor: '#ffffff'
-        });
-        
-        // Сохраняем
-        canvas.toBlob(function(blob) {
-            const link = document.createElement('a');
-            link.download = `Смета_${currentEstimate.clientName || 'клиента'}_${Date.now()}.png`;
-            link.href = URL.createObjectURL(blob);
-            link.click();
-            URL.revokeObjectURL(link.href);
-            
-            hideLoading();
-            showToast('✅ Изображение сохранено!');
-        }, 'image/png');
-        
-    } catch (error) {
-        console.error('Ошибка создания изображения:', error);
-        hideLoading();
-        showToast('❌ Ошибка создания изображения');
-    }
-}
-
-// Генерация HTML для экспорта
-function generateExportHTML(estimate) {
-    const date = new Date(estimate.timestamp);
-    const formattedDate = date.toLocaleDateString('ru-RU', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    });
-    
-    const estimateNumber = 'СМ-' + date.getFullYear() + '-' + 
-        String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-        String(date.getDate()).padStart(2, '0') + '-' + 
-        String(date.getHours()).padStart(2, '0') + 
-        String(date.getMinutes()).padStart(2, '0');
-    
-    let itemsHtml = '';
-    estimate.items.forEach((item, index) => {
-        itemsHtml += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${item.name}</td>
-                <td>${item.unit}</td>
-                <td>${item.quantity}</td>
-                <td>${formatCurrency(item.price)}</td>
-                <td>${formatCurrency(item.total)}</td>
-            </tr>
-        `;
-    });
-    
-    const totalInWords = numberToWords(estimate.total);
-    
-    return `
-        <div class="export-document">
-            <div class="watermark">PotolokForLife</div>
-            
-            <div class="export-header">
-                <div class="export-title">СМЕТА № ${estimateNumber}</div>
-                <div class="export-subtitle">на выполнение работ по монтажу натяжных потолков</div>
-                <div class="export-company">
-                    Исполнитель: PotolokForLife<br>
-                    ИНН: 1234567890 | ОГРН: 1234567890123<br>
-                    Адрес: г. Пушкино<br>
-                    Тел: 8(977)531-10-99 | Email: Potolokforlife@yandex.ru
-                </div>
-            </div>
-            
-            <div class="export-section">
-                <div class="export-section-title">1. Общие сведения</div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 5px 0; width: 30%;"><strong>Дата составления:</strong></td>
-                        <td style="padding: 5px 0;">${formattedDate}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Заказчик:</strong></td>
-                        <td style="padding: 5px 0;">${estimate.clientName || 'Не указано'}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Телефон:</strong></td>
-                        <td style="padding: 5px 0;">${estimate.clientPhone || 'Не указан'}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Исполнитель:</strong></td>
-                        <td style="padding: 5px 0;">PotolokForLife</td>
-                    </tr>
-                </table>
-            </div>
-            
-            <div class="export-section">
-                <div class="export-section-title">2. Характеристики объекта</div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="padding: 5px 0; width: 30%;"><strong>Адрес объекта:</strong></td>
-                        <td style="padding: 5px 0;">${estimate.address}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Тип объекта:</strong></td>
-                        <td style="padding: 5px 0;">${estimate.objectType}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Площадь потолка:</strong></td>
-                        <td style="padding: 5px 0;">${estimate.area} м²</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Периметр помещения:</strong></td>
-                        <td style="padding: 5px 0;">${estimate.perimeter} м.п.</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Система монтажа:</strong></td>
-                        <td style="padding: 5px 0;">${estimate.system}</td>
-                    </tr>
-                </table>
-            </div>
-            
-            <div class="export-section">
-                <div class="export-section-title">3. Перечень работ и материалов</div>
-                <table class="export-table">
-                    <thead>
-                        <tr>
-                            <th>№</th>
-                            <th>Наименование работ/материалов</th>
-                            <th>Ед. изм.</th>
-                            <th>Кол-во</th>
-                            <th>Цена за ед., руб.</th>
-                            <th>Стоимость, руб.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${itemsHtml || '<tr><td colspan="6" style="text-align: center;">Нет данных</td></tr>'}
-                        <tr class="export-total">
-                            <td colspan="5" style="text-align: right;"><strong>ВСЕГО:</strong></td>
-                            <td><strong>${formatCurrency(estimate.total)}</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <div class="export-section">
-                <div class="export-section-title">4. Финансовые условия</div>
-                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
-                    <tr>
-                        <td style="padding: 5px 0; width: 50%;"><strong>Общая стоимость работ:</strong></td>
-                        <td style="padding: 5px 0;">${formatCurrency(estimate.total)}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Предоплата (50%):</strong></td>
-                        <td style="padding: 5px 0;">${formatCurrency(estimate.prepayment)}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 5px 0;"><strong>Окончательный расчет (50%):</strong></td>
-                        <td style="padding: 5px 0;">${formatCurrency(estimate.finalPayment)}</td>
-                    </tr>
-                </table>
-                <div style="margin-top: 10px;">
-                    <strong>Всего к оплате:</strong> ${formatCurrency(estimate.total)} (${totalInWords})
-                </div>
-            </div>
-            
-            <div class="export-section">
-                <div class="export-section-title">5. Условия выполнения работ</div>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li>Срок выполнения работ: 3-5 рабочих дней после предоплаты</li>
-                    <li>Гарантия на выполненные работы: 5 лет</li>
-                    <li>Гарантия на материалы: 10 лет</li>
-                    <li>Смета действительна в течение 30 дней с даты составления</li>
-                    <li>Работы выполняются в соответствии с ГОСТ и СНиП</li>
-                </ul>
-            </div>
-            
-            <div class="export-signature">
-                <div class="export-signature-line">
-                    <div class="export-signature-block">
-                        <div class="export-signature-dash"></div>
-                        <div>Исполнитель</div>
-                        <div>PotolokForLife</div>
-                        <div style="font-size: 10pt; margin-top: 5px;">М.П.</div>
-                    </div>
-                    <div class="export-signature-block">
-                        <div class="export-signature-dash"></div>
-                        <div>Заказчик</div>
-                        <div>${estimate.clientName || '_________________________'}</div>
-                        <div style="font-size: 10pt; margin-top: 5px;">подпись, ФИО</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="export-footer">
-                <div>Смета составлена с помощью калькулятора PotolokForLife</div>
-                <div>Тел: 8(977)531-10-99 | Email: Potolokforlife@yandex.ru | Сайт: potolokforlife.ru</div>
-                <div>Дата печати: ${new Date().toLocaleString('ru-RU')}</div>
-            </div>
-        </div>
-    `;
 }
 
 // Загрузка истории
 function loadHistory() {
     try {
         const historyList = document.getElementById('historyList');
-        if (!historyList) return;
-        
         const history = JSON.parse(localStorage.getItem('potolokHistory') || '[]');
         
         if (history.length === 0) {
@@ -1166,10 +584,10 @@ function loadHistory() {
                         <div><strong>Сумма:</strong> ${formatCurrency(item.total)}</div>
                     </div>
                     <div class="history-item-actions">
-                        <button class="history-btn view" onclick="loadEstimateFromHistory('${item.id}')">
-                            <i class="fas fa-eye"></i> Просмотреть
+                        <button class="btn btn-secondary" onclick="loadEstimateFromHistory(${item.id})">
+                            <i class="fas fa-eye"></i> Загрузить
                         </button>
-                        <button class="history-btn delete" onclick="deleteEstimateFromHistory('${item.id}')">
+                        <button class="btn btn-danger" onclick="deleteEstimateFromHistory(${item.id})">
                             <i class="fas fa-trash"></i> Удалить
                         </button>
                     </div>
@@ -1181,6 +599,7 @@ function loadHistory() {
         
     } catch (error) {
         console.error('Ошибка загрузки истории:', error);
+        showToast('Ошибка загрузки истории');
     }
 }
 
@@ -1205,60 +624,62 @@ function loadEstimateFromHistory(id) {
         document.getElementById('perimeter').value = estimate.perimeter;
         
         // Устанавливаем систему
-        const systemBtn = document.querySelector(`.system-btn[data-system="${estimate.system.includes('+10%') ? 'garpun10' : 'garpun'}"]`);
-        if (systemBtn) {
-            document.querySelectorAll('.system-btn').forEach(b => b.classList.remove('active'));
-            systemBtn.classList.add('active');
-            currentSystem = systemBtn.dataset.system;
-        }
+        const systemKey = estimate.system.includes('+10%') ? 'garpun10' : 'garpun';
+        document.querySelectorAll('.system-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.system === systemKey) {
+                btn.classList.add('active');
+            }
+        });
+        
+        currentSystem = systemKey;
         
         // Загружаем услуги
         loadServices();
         
         // Заполняем количества
-        estimate.items.forEach(item => {
-            // Находим соответствующий элемент в текущей системе
-            const system = systemsData[currentSystem];
-            let service;
-            
-            // Ищем в основных услугах
-            service = system.basicServices.find(s => 
-                s.name === item.name || 
-                (s.id === item.id && item.type === 'basic')
-            );
-            
-            if (!service) {
-                // Ищем в освещении
-                service = system.lightingServices.find(s => 
-                    s.name === item.name || 
-                    (s.id === item.id && item.type === 'lighting')
+        setTimeout(() => {
+            estimate.items.forEach(item => {
+                // Находим соответствующий элемент в текущей системе
+                const system = systemsData[currentSystem];
+                let service;
+                
+                // Ищем в основных услугах
+                service = system.basicServices.find(s => 
+                    s.name === item.name || s.id === item.id
                 );
-            }
-            
-            if (!service) {
-                // Ищем в дополнительных
-                service = system.additionalServices.find(s => 
-                    s.name === item.name || 
-                    (s.id === item.id && item.type === 'additional')
-                );
-            }
-            
-            if (service) {
-                const input = document.querySelector(`.quantity-input[data-id="${service.id}"][data-type="${item.type || 'basic'}"]`);
-                if (input) {
-                    input.value = item.quantity;
+                
+                if (!service) {
+                    // Ищем в освещении
+                    service = system.lightingServices.find(s => 
+                        s.name === item.name || s.id === item.id
+                    );
                 }
-            }
-        });
-        
-        // Пересчитываем
-        calculateEstimate();
-        updateDocumentPreview();
-        
-        // Переключаемся на вкладку результатов
-        document.querySelector('.nav-tab[data-tab="results"]').click();
-        
-        showToast('✅ Смета загружена из истории');
+                
+                if (!service) {
+                    // Ищем в дополнительных
+                    service = system.additionalServices.find(s => 
+                        s.name === item.name || s.id === item.id
+                    );
+                }
+                
+                if (service) {
+                    const input = document.querySelector(`.quantity-input[data-id="${service.id}"]`);
+                    if (input) {
+                        input.value = item.quantity;
+                    }
+                }
+            });
+            
+            // Пересчитываем
+            calculateEstimate();
+            
+            // Переключаемся на вкладку результатов
+            document.querySelector('.nav-tab[data-tab="results"]').click();
+            
+            showToast('✅ Смета загружена из истории');
+            
+        }, 100);
         
     } catch (error) {
         console.error('Ошибка загрузки сметы:', error);
@@ -1303,7 +724,7 @@ function clearHistory() {
 function resetCalculator() {
     if (confirm('Вы уверены, что хотите сбросить все данные текущей сметы?')) {
         try {
-            // Сброс полей
+            // Сброс полей ввода
             ['area', 'perimeter', 'height', 'objectAddress', 'clientName', 'clientPhone'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
@@ -1321,14 +742,14 @@ function resetCalculator() {
             document.querySelectorAll('.system-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            const defaultBtn = document.querySelector('.system-btn[data-system="garpun"]');
-            if (defaultBtn) defaultBtn.classList.add('active');
+            document.querySelector('.system-btn[data-system="garpun"]').classList.add('active');
             currentSystem = 'garpun';
             
-            // Перезагрузка
+            // Перезагрузка услуг
             loadServices();
+            
+            // Пересчет
             calculateEstimate();
-            updateDocumentPreview();
             
             showToast('Данные сброшены');
             
@@ -1339,53 +760,359 @@ function resetCalculator() {
     }
 }
 
-// Сохранение локально
-function saveEstimateLocally() {
-    if (!currentEstimate) return;
+// Экспорт как PDF
+async function exportAsPDF() {
+    try {
+        if (!currentEstimate) {
+            showToast('❌ Сначала создайте смету');
+            return;
+        }
+        
+        showLoading('Генерируем PDF...');
+        
+        // Создаем HTML для экспорта
+        const exportHTML = generateExportHTML();
+        const exportContainer = document.getElementById('exportContainer');
+        exportContainer.innerHTML = exportHTML;
+        
+        // Создаем изображение с помощью html2canvas
+        const canvas = await html2canvas(exportContainer, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+        
+        // Создаем PDF с помощью jsPDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        
+        // Сохраняем PDF
+        const fileName = `Смета_${currentEstimate.clientName || 'клиента'}_${Date.now()}.pdf`;
+        pdf.save(fileName);
+        
+        hideLoading();
+        showToast('✅ PDF сохранен!');
+        
+    } catch (error) {
+        console.error('Ошибка создания PDF:', error);
+        hideLoading();
+        showToast('❌ Ошибка создания PDF');
+    }
+}
+
+// Экспорт как изображение
+async function exportAsImage() {
+    try {
+        if (!currentEstimate) {
+            showToast('❌ Сначала создайте смету');
+            return;
+        }
+        
+        showLoading('Создаем изображение...');
+        
+        // Создаем HTML для экспорта
+        const exportHTML = generateExportHTML();
+        const exportContainer = document.getElementById('exportContainer');
+        exportContainer.innerHTML = exportHTML;
+        
+        // Создаем canvas
+        const canvas = await html2canvas(exportContainer, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+        
+        // Сохраняем как PNG
+        canvas.toBlob(function(blob) {
+            const link = document.createElement('a');
+            link.download = `Смета_${currentEstimate.clientName || 'клиента'}_${Date.now()}.png`;
+            link.href = URL.createObjectURL(blob);
+            link.click();
+            URL.revokeObjectURL(link.href);
+            
+            hideLoading();
+            showToast('✅ Изображение сохранено!');
+        }, 'image/png');
+        
+    } catch (error) {
+        console.error('Ошибка создания изображения:', error);
+        hideLoading();
+        showToast('❌ Ошибка создания изображения');
+    }
+}
+
+// Генерация HTML для экспорта
+function generateExportHTML() {
+    const estimate = currentEstimate;
+    const date = new Date(estimate.timestamp);
+    const formattedDate = date.toLocaleDateString('ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
     
+    const estimateNumber = 'СМ-' + date.getFullYear() + '-' + 
+        String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(date.getDate()).padStart(2, '0');
+    
+    let itemsHtml = '';
+    estimate.items.forEach((item, index) => {
+        itemsHtml += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${item.name}</td>
+                <td>${item.unit}</td>
+                <td>${item.quantity}</td>
+                <td>${formatCurrency(item.price)}</td>
+                <td>${formatCurrency(item.total)}</td>
+            </tr>
+        `;
+    });
+    
+    const totalInWords = numberToWords(estimate.total);
+    
+    return `
+        <div style="width: 100%; max-width: 800px; margin: 0 auto; background: white; color: #000; font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.4; padding: 40px; position: relative;">
+            <div style="position: absolute; opacity: 0.1; font-size: 60pt; color: #1e3c72; transform: rotate(-45deg); top: 300px; left: 100px; pointer-events: none; z-index: -1;">PotolokForLife</div>
+            
+            <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #1e3c72;">
+                <div style="font-size: 20pt; font-weight: bold; color: #1e3c72; margin-bottom: 5px;">СМЕТА № ${estimateNumber}</div>
+                <div style="font-size: 14pt; color: #666; margin-bottom: 15px;">на выполнение работ по монтажу натяжных потолков</div>
+                <div style="font-size: 11pt; color: #333;">
+                    Исполнитель: PotolokForLife<br>
+                    Тел: 8(977)531-10-99 | Email: Potolokforlife@yandex.ru<br>
+                    Адрес: г. Пушкино
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <div style="font-size: 14pt; font-weight: bold; color: #1e3c72; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #dee2e6;">1. Общие сведения</div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 5px 0; width: 30%;"><strong>Дата составления:</strong></td>
+                        <td style="padding: 5px 0;">${formattedDate}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;"><strong>Заказчик:</strong></td>
+                        <td style="padding: 5px 0;">${estimate.clientName || 'Не указано'}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;"><strong>Телефон:</strong></td>
+                        <td style="padding: 5px 0;">${estimate.clientPhone || 'Не указан'}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <div style="font-size: 14pt; font-weight: bold; color: #1e3c72; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #dee2e6;">2. Характеристики объекта</div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 5px 0; width: 30%;"><strong>Адрес объекта:</strong></td>
+                        <td style="padding: 5px 0;">${estimate.address}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;"><strong>Тип объекта:</strong></td>
+                        <td style="padding: 5px 0;">${estimate.objectType}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;"><strong>Площадь потолка:</strong></td>
+                        <td style="padding: 5px 0;">${estimate.area} м²</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;"><strong>Система монтажа:</strong></td>
+                        <td style="padding: 5px 0;">${estimate.system}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <div style="font-size: 14pt; font-weight: bold; color: #1e3c72; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #dee2e6;">3. Перечень работ и материалов</div>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 11pt;">
+                    <thead>
+                        <tr>
+                            <th style="background: #f8f9fa; color: #1e3c72; padding: 10px; border: 1px solid #dee2e6; font-weight: bold; text-align: left;">№</th>
+                            <th style="background: #f8f9fa; color: #1e3c72; padding: 10px; border: 1px solid #dee2e6; font-weight: bold; text-align: left;">Наименование работ/материалов</th>
+                            <th style="background: #f8f9fa; color: #1e3c72; padding: 10px; border: 1px solid #dee2e6; font-weight: bold; text-align: left;">Ед. изм.</th>
+                            <th style="background: #f8f9fa; color: #1e3c72; padding: 10px; border: 1px solid #dee2e6; font-weight: bold; text-align: left;">Кол-во</th>
+                            <th style="background: #f8f9fa; color: #1e3c72; padding: 10px; border: 1px solid #dee2e6; font-weight: bold; text-align: left;">Цена за ед., руб.</th>
+                            <th style="background: #f8f9fa; color: #1e3c72; padding: 10px; border: 1px solid #dee2e6; font-weight: bold; text-align: left;">Стоимость, руб.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsHtml || '<tr><td colspan="6" style="text-align: center; padding: 20px;">Нет данных</td></tr>'}
+                        <tr style="background: #e8f4ff; font-weight: bold;">
+                            <td colspan="5" style="text-align: right; padding: 10px; border: 1px solid #dee2e6;"><strong>ВСЕГО:</strong></td>
+                            <td style="padding: 10px; border: 1px solid #dee2e6;"><strong>${formatCurrency(estimate.total)}</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <div style="font-size: 14pt; font-weight: bold; color: #1e3c72; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #dee2e6;">4. Финансовые условия</div>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                    <tr>
+                        <td style="padding: 5px 0; width: 50%;"><strong>Общая стоимость работ:</strong></td>
+                        <td style="padding: 5px 0;">${formatCurrency(estimate.total)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;"><strong>Предоплата (50%):</strong></td>
+                        <td style="padding: 5px 0;">${formatCurrency(estimate.prepayment)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 5px 0;"><strong>Окончательный расчет (50%):</strong></td>
+                        <td style="padding: 5px 0;">${formatCurrency(estimate.finalPayment)}</td>
+                    </tr>
+                </table>
+                <div style="margin-top: 10px;">
+                    <strong>Всего к оплате:</strong> ${formatCurrency(estimate.total)} (${totalInWords})
+                </div>
+            </div>
+            
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 1px dashed #999;">
+                <div style="display: flex; justify-content: space-between; margin-top: 40px;">
+                    <div style="width: 45%; text-align: center;">
+                        <div style="border-top: 1px dashed #999; margin-top: 60px; margin-bottom: 5px;"></div>
+                        <div>Исполнитель</div>
+                        <div>PotolokForLife</div>
+                        <div style="font-size: 10pt; margin-top: 5px;">М.П.</div>
+                    </div>
+                    <div style="width: 45%; text-align: center;">
+                        <div style="border-top: 1px dashed #999; margin-top: 60px; margin-bottom: 5px;"></div>
+                        <div>Заказчик</div>
+                        <div>${estimate.clientName || '_________________________'}</div>
+                        <div style="font-size: 10pt; margin-top: 5px;">подпись, ФИО</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #dee2e6; font-size: 10pt; color: #666; text-align: center;">
+                <div>Смета составлена с помощью калькулятора PotolokForLife</div>
+                <div>Тел: 8(977)531-10-99 | Email: Potolokforlife@yandex.ru</div>
+                <div>Дата печати: ${new Date().toLocaleString('ru-RU')}</div>
+            </div>
+        </div>
+    `;
+}
+
+// Поделиться в Telegram
+function shareToTelegram() {
     try {
-        // Создаем JSON файл
-        const json = JSON.stringify(currentEstimate, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const link = document.createElement('a');
-        link.download = `Смета_${currentEstimate.clientName || 'клиента'}_${Date.now()}.json`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-        URL.revokeObjectURL(link.href);
+        if (!currentEstimate) {
+            showToast('❌ Сначала создайте смету');
+            return;
+        }
+        
+        const message = generateTelegramMessage();
+        const url = `https://t.me/share/url?text=${encodeURIComponent(message)}`;
+        
+        if (tg && tg.openLink) {
+            tg.openLink(url);
+        } else {
+            window.open(url, '_blank');
+        }
+        
+        showToast('📲 Открываю Telegram...');
         
     } catch (error) {
-        console.error('Ошибка сохранения:', error);
+        console.error('Ошибка отправки в Telegram:', error);
+        showToast('❌ Ошибка отправки');
     }
 }
 
-// Проверка доступности сервера бота
-function isBotServerAvailable() {
-    // Здесь должна быть проверка доступности сервера
-    // Пока возвращаем false для использования локального сохранения
-    return false;
+// Генерация сообщения для Telegram
+function generateTelegramMessage() {
+    const estimate = currentEstimate;
+    const date = new Date(estimate.timestamp);
+    const formattedDate = date.toLocaleDateString('ru-RU');
+    
+    let itemsText = '';
+    estimate.items.slice(0, 5).forEach((item, index) => {
+        itemsText += `${index + 1}. ${item.name}: ${item.quantity} ${item.unit} × ${formatCurrency(item.price)} = ${formatCurrency(item.total)}\n`;
+    });
+    
+    if (estimate.items.length > 5) {
+        itemsText += `... и еще ${estimate.items.length - 5} позиций\n`;
+    }
+    
+    return `🏠 СМЕТА НА НАТЯЖНЫЕ ПОТОЛКИ
+
+📅 Дата: ${formattedDate}
+👤 Клиент: ${estimate.clientName || 'Не указано'}
+📞 Телефон: ${estimate.clientPhone || 'Не указан'}
+📍 Адрес: ${estimate.address}
+📏 Площадь: ${estimate.area} м²
+🔧 Система: ${estimate.system}
+
+📋 ОСНОВНЫЕ ПОЗИЦИИ:
+${itemsText}
+
+💰 ИТОГО: ${formatCurrency(estimate.total)}
+💳 Предоплата (50%): ${formatCurrency(estimate.prepayment)}
+💳 Окончательный расчет (50%): ${formatCurrency(estimate.finalPayment)}
+
+🏢 Компания: PotolokForLife
+📞 Телефон: 8(977)531-10-99
+✉️ Email: Potolokforlife@yandex.ru
+
+#смета #потолки #${estimate.objectType}`;
 }
 
-// Отправка на сервер бота
-async function sendToBotServer(estimate) {
+// Поделиться в WhatsApp
+function shareToWhatsApp() {
     try {
-        // Эмуляция отправки на сервер
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!currentEstimate) {
+            showToast('❌ Сначала создайте смету');
+            return;
+        }
         
-        return {
-            success: true,
-            data: {
-                estimateId: Date.now(),
-                savedAt: new Date().toISOString(),
-                message: 'Смета сохранена в базе бота'
-            }
-        };
+        const message = generateWhatsAppMessage();
+        const phone = "79775311099";
+        const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+        
+        window.open(url, '_blank');
+        showToast('📲 Открываю WhatsApp...');
         
     } catch (error) {
-        return {
-            success: false,
-            error: error.message
-        };
+        console.error('Ошибка WhatsApp:', error);
+        showToast('❌ Ошибка отправки');
     }
+}
+
+// Генерация сообщения для WhatsApp
+function generateWhatsAppMessage() {
+    const estimate = currentEstimate;
+    const date = new Date(estimate.timestamp);
+    const formattedDate = date.toLocaleDateString('ru-RU');
+    
+    return `Здравствуйте!
+
+Отправляю вам смету на натяжные потолки:
+
+📅 Дата: ${formattedDate}
+👤 Клиент: ${estimate.clientName || 'Не указано'}
+📍 Адрес: ${estimate.address}
+📏 Площадь: ${estimate.area} м²
+💰 Общая стоимость: ${formatCurrency(estimate.total)}
+
+💳 Предоплата (50%): ${formatCurrency(estimate.prepayment)}
+💳 Окончательный расчет (50%): ${formatCurrency(estimate.finalPayment)}
+
+Для подтверждения заказа или уточнения деталей, свяжитесь с нами:
+
+📞 Телефон: 8(977)531-10-99
+✉️ Email: Potolokforlife@yandex.ru
+
+С уважением,
+PotolokForLife`;
 }
 
 // Вспомогательные функции
@@ -1465,14 +1192,8 @@ function numberToWords(num) {
     if (rubles === 0) {
         words = 'ноль рублей';
     } else {
-        // Миллионы
-        const millions = Math.floor(rubles / 1000000);
-        if (millions > 0) {
-            words += convertThreeDigits(millions) + ' миллионов ';
-        }
-        
         // Тысячи
-        const thousands = Math.floor((rubles % 1000000) / 1000);
+        const thousands = Math.floor(rubles / 1000);
         if (thousands > 0) {
             words += convertThreeDigits(thousands) + ' тысяч ';
         }
