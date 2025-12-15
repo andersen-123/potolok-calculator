@@ -1,3 +1,4 @@
+/* Основные переменные */
 :root {
     --primary-color: #1e3c72;
     --secondary-color: #2a5298;
@@ -5,7 +6,6 @@
     --light-color: #f5f7fa;
     --dark-color: #333;
     --success-color: #28a745;
-    --warning-color: #ffc107;
     --danger-color: #dc3545;
     --telegram-color: #0088cc;
     --whatsapp-color: #25D366;
@@ -14,20 +14,21 @@
     --transition: all 0.3s ease;
 }
 
+/* Сброс и базовые стили */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
     background: var(--light-color);
     color: var(--dark-color);
-    line-height: 1.5;
+    line-height: 1.6;
     padding: 0;
     padding-bottom: 80px;
+    min-height: 100vh;
 }
 
 .container {
@@ -36,7 +37,7 @@ body {
     margin: 0 auto;
 }
 
-/* Header */
+/* Хедер */
 .header {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: white;
@@ -69,11 +70,6 @@ body {
     font-weight: 700;
 }
 
-.logo p {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
 .contact-info {
     display: flex;
     flex-direction: column;
@@ -87,12 +83,7 @@ body {
     gap: 8px;
 }
 
-.contact-item i {
-    width: 20px;
-    text-align: center;
-}
-
-/* Navigation */
+/* Навигация */
 .mobile-nav {
     display: flex;
     justify-content: space-between;
@@ -117,6 +108,7 @@ body {
     border-radius: 8px;
     transition: var(--transition);
     font-size: 0.9rem;
+    cursor: pointer;
 }
 
 .nav-tab.active {
@@ -124,22 +116,7 @@ body {
     color: white;
 }
 
-/* Tabs */
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Cards */
+/* Карточки */
 .card {
     background: white;
     border-radius: var(--border-radius);
@@ -159,7 +136,7 @@ body {
     gap: 10px;
 }
 
-/* Forms */
+/* Формы */
 .input-group {
     margin-bottom: 20px;
 }
@@ -172,9 +149,8 @@ body {
     font-size: 0.95rem;
 }
 
-.input-group input, 
-.input-group select,
-.input-group textarea {
+.input-group input,
+.input-group select {
     width: 100%;
     padding: 14px 15px;
     border: 2px solid #e0e0e0;
@@ -184,9 +160,8 @@ body {
     background: #f9f9f9;
 }
 
-.input-group input:focus, 
-.input-group select:focus,
-.input-group textarea:focus {
+.input-group input:focus,
+.input-group select:focus {
     border-color: var(--accent-color);
     outline: none;
     background: white;
@@ -204,7 +179,7 @@ body {
     margin-bottom: 0;
 }
 
-/* System Selector */
+/* Системы */
 .system-selector {
     display: flex;
     flex-wrap: wrap;
@@ -223,6 +198,7 @@ body {
     font-size: 0.9rem;
     transition: var(--transition);
     text-align: center;
+    cursor: pointer;
 }
 
 .system-btn.active {
@@ -230,7 +206,7 @@ body {
     color: white;
 }
 
-/* Services List */
+/* Список услуг */
 .services-list {
     max-height: 400px;
     overflow-y: auto;
@@ -292,7 +268,7 @@ body {
     font-size: 1rem;
 }
 
-/* Results */
+/* Результаты */
 .results {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -320,39 +296,7 @@ body {
     color: var(--primary-color);
 }
 
-/* Payment Info */
-.payment-info {
-    background: #f0f7ff;
-    border-left: 5px solid var(--primary-color);
-    padding: 20px;
-    margin-top: 20px;
-    border-radius: 10px;
-}
-
-.payment-info h3 {
-    color: var(--primary-color);
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-}
-
-.payment-info ul {
-    padding-left: 20px;
-}
-
-.payment-info li {
-    margin-bottom: 10px;
-    line-height: 1.5;
-    font-size: 0.9rem;
-}
-
-.highlight {
-    background-color: #fffacd;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-}
-
-/* Summary Table */
+/* Таблица */
 .summary-table-container {
     max-height: 300px;
     overflow-y: auto;
@@ -367,17 +311,19 @@ body {
     font-size: 0.9rem;
 }
 
-.summary-table th, 
-.summary-table td {
-    padding: 12px 10px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-}
-
 .summary-table th {
     background: #f8f9fa;
     color: var(--primary-color);
+    padding: 12px 10px;
+    text-align: left;
     font-weight: 700;
+    position: sticky;
+    top: 0;
+}
+
+.summary-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #eee;
 }
 
 .total-row {
@@ -385,26 +331,7 @@ body {
     font-weight: 700;
 }
 
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #666;
-}
-
-/* Buttons */
-.action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 25px;
-    margin-bottom: 30px;
-}
-
-.btn-row {
-    display: flex;
-    gap: 10px;
-}
-
+/* Кнопки */
 .btn {
     padding: 14px 16px;
     border: none;
@@ -418,7 +345,6 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    flex: 1;
 }
 
 .btn:active {
@@ -445,171 +371,20 @@ body {
     color: white;
 }
 
-.btn-telegram {
-    background: linear-gradient(135deg, var(--telegram-color), #00aced);
-    color: white;
-}
-
-.btn-whatsapp {
-    background: linear-gradient(135deg, var(--whatsapp-color), #128C7E);
-    color: white;
-}
-
-/* Object Info */
-.object-info {
-    background: #e8f4ff;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-/* Telegram Status */
-.telegram-status {
-    display: none;
-    background: var(--telegram-color);
-    color: white;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    text-align: center;
-    font-weight: 600;
-}
-
-/* Document Preview */
-.document-preview {
-    background: white;
-    border: 2px solid #1e3c72;
-    border-radius: 8px;
-    padding: 0;
-    margin-top: 20px;
-    max-height: 400px;
-    overflow-y: auto;
-    font-family: 'Times New Roman', Times, serif;
-}
-
-.document-header {
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    color: white;
-    padding: 20px;
-    text-align: center;
-    border-bottom: 3px double white;
-}
-
-.document-title {
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 5px;
-    letter-spacing: 1px;
-}
-
-.document-subtitle {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-.document-content {
-    padding: 20px;
-}
-
-.document-section {
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
-}
-
-.document-section:last-child {
-    border-bottom: none;
-}
-
-.document-section-title {
-    font-weight: bold;
-    color: #1e3c72;
-    margin-bottom: 10px;
-    font-size: 1rem;
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 5px;
-}
-
-.document-row {
+.btn-row {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
+    gap: 10px;
 }
 
-.document-row .label {
-    font-weight: 600;
-    color: #555;
-}
-
-.document-row .value {
-    font-weight: 600;
-    color: #1e3c72;
-}
-
-.document-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-    font-size: 0.85rem;
-}
-
-.document-table th {
-    background: #f8f9fa;
-    color: #1e3c72;
-    padding: 10px;
-    text-align: left;
-    border: 1px solid #dee2e6;
-    font-weight: bold;
-}
-
-.document-table td {
-    padding: 10px;
-    border: 1px solid #dee2e6;
-}
-
-.document-table .total-row {
-    background: #e8f4ff;
-    font-weight: bold;
-}
-
-.document-footer {
-    background: #f8f9fa;
-    padding: 15px;
-    text-align: center;
-    border-top: 2px solid #dee2e6;
-    font-size: 0.85rem;
-    color: #666;
-}
-
-.document-signature {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 1px dashed #ccc;
-}
-
-.signature-line {
+.action-buttons {
     display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 25px;
+    margin-bottom: 30px;
 }
 
-.signature-block {
-    width: 45%;
-    text-align: center;
-}
-
-.signature-line-dashed {
-    border-top: 1px dashed #999;
-    margin: 40px 0 5px 0;
-}
-
-.signature-label {
-    font-size: 0.8rem;
-    color: #666;
-}
-
-/* Export Options */
+/* Экспорт */
 .export-options {
     display: flex;
     flex-direction: column;
@@ -633,6 +408,7 @@ body {
     color: #495057;
     cursor: pointer;
     transition: all 0.3s ease;
+    text-align: left;
 }
 
 .export-btn:hover {
@@ -649,137 +425,7 @@ body {
 .export-btn.telegram i { color: #0088cc; }
 .export-btn.whatsapp i { color: #25D366; }
 
-/* Export Container */
-.export-container {
-    position: fixed;
-    left: -9999px;
-    top: -9999px;
-    width: 800px;
-    background: white;
-    padding: 40px;
-    font-family: 'Times New Roman', Times, serif;
-}
-
-.export-document {
-    width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
-    background: white;
-    color: #000;
-    font-size: 12pt;
-    line-height: 1.4;
-}
-
-.export-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #1e3c72;
-}
-
-.export-title {
-    font-size: 20pt;
-    font-weight: bold;
-    color: #1e3c72;
-    margin-bottom: 5px;
-}
-
-.export-subtitle {
-    font-size: 14pt;
-    color: #666;
-    margin-bottom: 15px;
-}
-
-.export-company {
-    font-size: 11pt;
-    color: #333;
-}
-
-.export-section {
-    margin-bottom: 25px;
-    page-break-inside: avoid;
-}
-
-.export-section-title {
-    font-size: 14pt;
-    font-weight: bold;
-    color: #1e3c72;
-    margin-bottom: 15px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.export-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-    font-size: 11pt;
-}
-
-.export-table th {
-    background: #f8f9fa;
-    color: #1e3c72;
-    padding: 10px;
-    border: 1px solid #dee2e6;
-    font-weight: bold;
-    text-align: left;
-}
-
-.export-table td {
-    padding: 8px 10px;
-    border: 1px solid #dee2e6;
-}
-
-.export-total {
-    background: #e8f4ff;
-    font-weight: bold;
-}
-
-.export-signature {
-    margin-top: 50px;
-    padding-top: 20px;
-    border-top: 1px dashed #999;
-}
-
-.export-signature-line {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 40px;
-}
-
-.export-signature-block {
-    width: 45%;
-    text-align: center;
-}
-
-.export-signature-dash {
-    border-top: 1px dashed #999;
-    margin-top: 60px;
-    margin-bottom: 5px;
-}
-
-.export-footer {
-    margin-top: 30px;
-    padding-top: 20px;
-    border-top: 2px solid #dee2e6;
-    font-size: 10pt;
-    color: #666;
-    text-align: center;
-}
-
-.watermark {
-    position: absolute;
-    opacity: 0.1;
-    font-size: 60pt;
-    color: #1e3c72;
-    transform: rotate(-45deg);
-    pointer-events: none;
-    z-index: -1;
-    top: 300px;
-    left: 100px;
-}
-
-/* History */
+/* История */
 .history-controls {
     display: flex;
     gap: 10px;
@@ -823,35 +469,43 @@ body {
 .history-item-details {
     font-size: 0.9rem;
     color: #555;
+    margin-bottom: 10px;
 }
 
 .history-item-actions {
     display: flex;
     gap: 8px;
-    margin-top: 10px;
 }
 
-.history-btn {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.8rem;
+/* Уведомления */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--dark-color);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 1000;
     font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
+    display: none;
+    max-width: 90%;
+    text-align: center;
 }
 
-.history-btn.view {
-    background: #e8f4ff;
-    color: var(--primary-color);
+.toast.show {
+    display: block;
+    animation: slideUp 0.3s ease;
 }
 
-.history-btn.delete {
-    background: #f8d7da;
-    color: var(--danger-color);
+@keyframes slideUp {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* Loading Overlay */
+/* Загрузка */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -881,35 +535,51 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-/* Toast */
-.toast {
+/* Скрытые элементы */
+.export-container {
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--dark-color);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    z-index: 1000;
-    font-weight: 600;
-    display: none;
-    max-width: 90%;
-    text-align: center;
+    left: -9999px;
+    top: -9999px;
+    width: 800px;
+    background: white;
+    padding: 40px;
+    font-family: 'Times New Roman', Times, serif;
 }
 
-.toast.show {
-    display: block;
-    animation: slideUp 0.3s ease;
+/* Адаптивность */
+@media (max-width: 768px) {
+    .input-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .system-btn {
+        min-width: 100px;
+        padding: 10px 12px;
+    }
+    
+    .results {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .btn {
+        padding: 12px 14px;
+    }
+    
+    .export-options {
+        padding: 10px;
+    }
+    
+    .export-btn {
+        padding: 10px 12px;
+    }
+    
+    .history-controls {
+        flex-direction: column;
+    }
 }
 
-@keyframes slideUp {
-    from { opacity: 0; transform: translate(-50%, 20px); }
-    to { opacity: 1; transform: translate(-50%, 0); }
-}
-
-/* Media Queries */
 @media (max-width: 480px) {
     .container {
         padding: 10px;
@@ -919,15 +589,13 @@ body {
         padding: 15px;
     }
     
-    .input-row {
-        flex-direction: column;
-        gap: 15px;
+    .mobile-nav {
+        padding: 8px;
     }
     
-    .system-btn {
-        min-width: 100px;
-        padding: 10px 12px;
-        font-size: 0.85rem;
+    .nav-tab {
+        font-size: 0.8rem;
+        padding: 10px 3px;
     }
     
     .service-controls {
@@ -939,42 +607,5 @@ body {
     .quantity-input {
         width: 60px;
         padding: 8px;
-        font-size: 0.9rem;
-    }
-    
-    .results {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .btn {
-        padding: 12px 14px;
-        font-size: 0.9rem;
-    }
-    
-    .document-preview {
-        max-height: 300px;
-    }
-    
-    .document-table {
-        font-size: 0.75rem;
-    }
-    
-    .document-table th,
-    .document-table td {
-        padding: 6px 4px;
-    }
-    
-    .export-options {
-        padding: 10px;
-    }
-    
-    .export-btn {
-        padding: 10px 12px;
-        font-size: 0.9rem;
-    }
-    
-    .history-controls {
-        flex-direction: column;
     }
 }
