@@ -8,7 +8,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Стили остаются без изменений */
         :root {
             --primary-color: #1e3c72;
             --secondary-color: #2a5298;
@@ -477,6 +476,139 @@
             font-weight: 600;
         }
         
+        .document-preview {
+            background: white;
+            border: 2px solid #1e3c72;
+            border-radius: 8px;
+            padding: 0;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Times New Roman', Times, serif;
+        }
+        
+        .document-header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px double white;
+        }
+        
+        .document-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        
+        .document-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .document-content {
+            padding: 20px;
+        }
+        
+        .document-section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        
+        .document-section:last-child {
+            border-bottom: none;
+        }
+        
+        .document-section-title {
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 5px;
+        }
+        
+        .document-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .document-row .label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .document-row .value {
+            font-weight: 600;
+            color: #1e3c72;
+        }
+        
+        .document-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.85rem;
+        }
+        
+        .document-table th {
+            background: #f8f9fa;
+            color: #1e3c72;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #dee2e6;
+            font-weight: bold;
+        }
+        
+        .document-table td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .document-table .total-row {
+            background: #e8f4ff;
+            font-weight: bold;
+        }
+        
+        .document-footer {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            border-top: 2px solid #dee2e6;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .document-signature {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+        }
+        
+        .signature-line {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .signature-block {
+            width: 45%;
+            text-align: center;
+        }
+        
+        .signature-line-dashed {
+            border-top: 1px dashed #999;
+            margin: 40px 0 5px 0;
+        }
+        
+        .signature-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
         @media (max-width: 480px) {
             .container {
                 padding: 10px;
@@ -517,6 +649,19 @@
             .btn {
                 padding: 12px 14px;
                 font-size: 0.9rem;
+            }
+            
+            .document-preview {
+                max-height: 300px;
+            }
+            
+            .document-table {
+                font-size: 0.75rem;
+            }
+            
+            .document-table th,
+            .document-table td {
+                padding: 6px 4px;
             }
         }
         
@@ -741,6 +886,12 @@
                     </table>
                 </div>
                 
+                <!-- Предпросмотр документа -->
+                <h2 class="card-title"><i class="fas fa-file-invoice"></i> Предпросмотр сметы</h2>
+                <div class="document-preview" id="documentPreview">
+                    <!-- Здесь будет предпросмотр документа -->
+                </div>
+                
                 <div class="action-buttons">
                     <button class="btn btn-primary" id="calculateBtn3">
                         <i class="fas fa-calculator"></i> Пересчитать
@@ -824,6 +975,7 @@
                 loadServices();
                 setupEventListeners();
                 calculateEstimate();
+                updateDocumentPreview();
             } catch (error) {
                 console.error('Ошибка инициализации:', error);
                 showToast('Ошибка загрузки приложения');
@@ -864,6 +1016,7 @@
                         
                         if (targetTab === 'results') {
                             calculateEstimate();
+                            updateDocumentPreview();
                         }
                     });
                 });
@@ -881,6 +1034,7 @@
                         currentSystem = this.dataset.system;
                         loadServices();
                         calculateEstimate();
+                        updateDocumentPreview();
                         showToast(`Система: ${systemsData[currentSystem].name}`);
                     });
                 });
@@ -965,7 +1119,10 @@
                 
                 // Добавляем обработчики для новых инпутов
                 document.querySelectorAll('.quantity-input').forEach(input => {
-                    input.addEventListener('input', calculateEstimate);
+                    input.addEventListener('input', function() {
+                        calculateEstimate();
+                        updateDocumentPreview();
+                    });
                 });
             } catch (error) {
                 console.error('Ошибка загрузки услуг:', error);
@@ -978,7 +1135,10 @@
                 const calculateBtns = ['calculateBtn', 'calculateBtn2', 'calculateBtn3'];
                 calculateBtns.forEach(id => {
                     const btn = document.getElementById(id);
-                    if (btn) btn.addEventListener('click', calculateEstimate);
+                    if (btn) btn.addEventListener('click', function() {
+                        calculateEstimate();
+                        updateDocumentPreview();
+                    });
                 });
                 
                 // Кнопки сброса
@@ -1005,14 +1165,24 @@
                 // Поля ввода
                 const areaInput = document.getElementById('area');
                 const perimeterInput = document.getElementById('perimeter');
-                if (areaInput) areaInput.addEventListener('input', calculateEstimate);
-                if (perimeterInput) perimeterInput.addEventListener('input', calculateEstimate);
+                const addressInput = document.getElementById('objectAddress');
+                
+                if (areaInput) areaInput.addEventListener('input', function() {
+                    calculateEstimate();
+                    updateDocumentPreview();
+                });
+                if (perimeterInput) perimeterInput.addEventListener('input', function() {
+                    calculateEstimate();
+                    updateDocumentPreview();
+                });
+                if (addressInput) addressInput.addEventListener('input', updateDocumentPreview);
                 
                 // Защита от отрицательных значений
                 document.addEventListener('input', function(e) {
                     if (e.target.type === 'number' && e.target.value < 0) {
                         e.target.value = 0;
                         calculateEstimate();
+                        updateDocumentPreview();
                     }
                 });
             } catch (error) {
@@ -1173,6 +1343,172 @@
             }
         }
 
+        function updateDocumentPreview() {
+            try {
+                const preview = document.getElementById('documentPreview');
+                if (!preview) return;
+                
+                const address = document.getElementById('objectAddress')?.value || 'Не указан';
+                const area = document.getElementById('area')?.value || 0;
+                const perimeter = document.getElementById('perimeter')?.value || 0;
+                const objectType = document.getElementById('objectType')?.value || 'квартира';
+                const roomCount = document.getElementById('roomCount')?.value || 1;
+                
+                const totalCost = selectedServices.reduce((sum, s) => sum + (s.total || 0), 0);
+                const prepayment = totalCost * 0.5;
+                const finalPayment = totalCost * 0.5;
+                
+                // Форматируем дату
+                const now = new Date();
+                const formattedDate = now.toLocaleDateString('ru-RU', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+                
+                // Номер сметы (генерируем из timestamp)
+                const estimateNumber = 'СМ-' + now.getFullYear() + '-' + 
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(now.getDate()).padStart(2, '0') + '-' + 
+                    String(now.getHours()).padStart(2, '0') + 
+                    String(now.getMinutes()).padStart(2, '0');
+                
+                // Генерируем HTML для документа
+                let itemsHtml = '';
+                selectedServices.forEach((item, index) => {
+                    itemsHtml += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${item.name}</td>
+                            <td>${item.quantity} ${item.unit}</td>
+                            <td>${formatCurrency(item.price)}</td>
+                            <td>${formatCurrency(item.total)}</td>
+                        </tr>
+                    `;
+                });
+                
+                preview.innerHTML = `
+                    <div class="document-header">
+                        <div class="document-title">СМЕТА № ${estimateNumber}</div>
+                        <div class="document-subtitle">на выполнение работ по монтажу натяжных потолков</div>
+                    </div>
+                    <div class="document-content">
+                        <div class="document-section">
+                            <div class="document-section-title">1. ОБЩИЕ СВЕДЕНИЯ</div>
+                            <div class="document-row">
+                                <div class="label">Дата составления:</div>
+                                <div class="value">${formattedDate}</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Заказчик:</div>
+                                <div class="value">Физическое лицо</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Исполнитель:</div>
+                                <div class="value">PotolokForLife</div>
+                            </div>
+                        </div>
+                        
+                        <div class="document-section">
+                            <div class="document-section-title">2. ХАРАКТЕРИСТИКИ ОБЪЕКТА</div>
+                            <div class="document-row">
+                                <div class="label">Тип объекта:</div>
+                                <div class="value">${objectType}</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Адрес объекта:</div>
+                                <div class="value">${address}</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Количество помещений:</div>
+                                <div class="value">${roomCount}</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Площадь потолка:</div>
+                                <div class="value">${area} м²</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Периметр помещения:</div>
+                                <div class="value">${perimeter} м.п.</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Система монтажа:</div>
+                                <div class="value">${systemsData[currentSystem]?.name || 'Гарпунная'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="document-section">
+                            <div class="document-section-title">3. ПЕРЕЧЕНЬ РАБОТ И МАТЕРИАЛОВ</div>
+                            <table class="document-table">
+                                <thead>
+                                    <tr>
+                                        <th>№</th>
+                                        <th>Наименование работ/материалов</th>
+                                        <th>Ед. изм.</th>
+                                        <th>Кол-во</th>
+                                        <th>Цена за ед., руб.</th>
+                                        <th>Стоимость, руб.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml || '<tr><td colspan="6" style="text-align: center;">Нет данных</td></tr>'}
+                                    <tr class="total-row">
+                                        <td colspan="5"><strong>ИТОГО:</strong></td>
+                                        <td><strong>${formatCurrency(totalCost)}</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="document-section">
+                            <div class="document-section-title">4. УСЛОВИЯ ОПЛАТЫ</div>
+                            <div class="document-row">
+                                <div class="label">Предоплата (50%):</div>
+                                <div class="value">${formatCurrency(prepayment)}</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Окончательный расчет (50%):</div>
+                                <div class="value">${formatCurrency(finalPayment)}</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Срок выполнения работ:</div>
+                                <div class="value">3-5 рабочих дней после предоплаты</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Гарантия на работы:</div>
+                                <div class="value">5 лет</div>
+                            </div>
+                            <div class="document-row">
+                                <div class="label">Гарантия на материалы:</div>
+                                <div class="value">10 лет</div>
+                            </div>
+                        </div>
+                        
+                        <div class="document-signature">
+                            <div class="signature-line">
+                                <div class="signature-block">
+                                    <div class="signature-line-dashed"></div>
+                                    <div class="signature-label">Исполнитель</div>
+                                    <div class="signature-label">PotolokForLife</div>
+                                </div>
+                                <div class="signature-block">
+                                    <div class="signature-line-dashed"></div>
+                                    <div class="signature-label">Заказчик</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="document-footer">
+                        <div>Исполнитель: PotolokForLife | Тел: 8(977)531-10-99 | Email: Potolokforlife@yandex.ru</div>
+                        <div>Адрес: г. Пушкино | Смета действительна в течение 30 дней</div>
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Ошибка обновления предпросмотра:', error);
+            }
+        }
+
         function saveEstimate() {
             try {
                 const estimate = {
@@ -1208,16 +1544,54 @@
                 const area = document.getElementById('area')?.value || 0;
                 const total = selectedServices.reduce((sum, item) => sum + (item.total || 0), 0);
                 
-                const message = `🏠 Смета на потолки 🏠
+                // Формируем официальное сообщение
+                const now = new Date();
+                const estimateNumber = 'СМ-' + now.getFullYear() + '-' + 
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(now.getDate()).padStart(2, '0') + '-' + 
+                    String(now.getHours()).padStart(2, '0') + 
+                    String(now.getMinutes()).padStart(2, '0');
+                
+                let itemsDetails = '';
+                if (selectedServices.length > 0) {
+                    selectedServices.forEach((item, index) => {
+                        itemsDetails += `${index + 1}. ${item.name}: ${item.quantity} ${item.unit} × ${formatCurrency(item.price)} = ${formatCurrency(item.total)}\n`;
+                    });
+                }
+                
+                const message = `*СМЕТА № ${estimateNumber}*
+*PotolokForLife - Натяжные потолки на всю жизнь*
 
-📍 Адрес: ${address}
-📏 Площадь: ${area} м²
-💰 Стоимость: ${formatCurrency(total)}
+*1. ОБЩИЕ СВЕДЕНИЯ*
+Дата: ${now.toLocaleDateString('ru-RU')}
+Заказчик: Физическое лицо
+Исполнитель: PotolokForLife
 
-📞 Для заказа: 8(977)531-10-99
-✉️ Potolokforlife@yandex.ru
+*2. ХАРАКТЕРИСТИКИ ОБЪЕКТА*
+Адрес: ${address}
+Площадь: ${area} м²
+Система: ${systemsData[currentSystem]?.name || 'Гарпунная'}
 
-Смета создана в PotolokForLife`;
+*3. ПЕРЕЧЕНЬ РАБОТ И МАТЕРИАЛОВ*
+${itemsDetails || 'Нет данных'}
+
+*4. ИТОГО*
+Общая стоимость: *${formatCurrency(total)}*
+Предоплата (50%): *${formatCurrency(total * 0.5)}*
+Окончательный расчет (50%): *${formatCurrency(total * 0.5)}*
+
+*5. КОНТАКТНАЯ ИНФОРМАЦИЯ*
+Телефон: 8(977)531-10-99
+Email: Potolokforlife@yandex.ru
+Адрес: г. Пушкино
+
+*УСЛОВИЯ:*
+• Гарантия на работы: 5 лет
+• Гарантия на материалы: 10 лет
+• Срок выполнения: 3-5 рабочих дней
+• Смета действительна: 30 дней
+
+Для подтверждения заказа свяжитесь с нами.`;
                 
                 const phone = "79775311099";
                 const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
@@ -1237,49 +1611,78 @@
                 const area = document.getElementById('area')?.value || 0;
                 const total = selectedServices.reduce((sum, item) => sum + (item.total || 0), 0);
                 
-                if (tg && tg.sendData) {
-                    // Если в Telegram Web App
-                    const message = `Новая смета на натяжные потолки:
-                    
-Адрес: ${address}
-Площадь: ${area} м²
-Система: ${systemsData[currentSystem]?.name || 'Неизвестно'}
-Итоговая стоимость: ${formatCurrency(total)}
-
-Дата: ${new Date().toLocaleString('ru-RU')}`;
-                    
-                    tg.sendData(JSON.stringify({
-                        type: 'estimate',
-                        address: address,
-                        area: area,
-                        system: systemsData[currentSystem]?.name || 'Неизвестно',
-                        total: total,
-                        date: new Date().toISOString()
-                    }));
-                    
-                    if (tg.showAlert) {
-                        tg.showAlert('✅ Смета отправлена! Менеджер свяжется с вами в течение 30 минут.');
-                    }
-                    
-                } else {
-                    // Если в обычном браузере
-                    const message = `Смета на натяжные потолки:
-                    
-Адрес: ${address}
-Площадь: ${area} м²
-Стоимость: ${formatCurrency(total)}
-
-Для заказа: 8(977)531-10-99`;
-                    
-                    // Открываем Telegram с сообщением
-                    const url = `https://t.me/share/url?url=&text=${encodeURIComponent(message)}`;
-                    window.open(url, '_blank');
-                    showToast('📲 Открываю Telegram...');
+                // Формируем официальное сообщение
+                const now = new Date();
+                const estimateNumber = 'СМ-' + now.getFullYear() + '-' + 
+                    String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                    String(now.getDate()).padStart(2, '0') + '-' + 
+                    String(now.getHours()).padStart(2, '0') + 
+                    String(now.getMinutes()).padStart(2, '0');
+                
+                let itemsDetails = '';
+                if (selectedServices.length > 0) {
+                    selectedServices.forEach((item, index) => {
+                        itemsDetails += `${index + 1}. ${item.name}: ${item.quantity} ${item.unit} × ${formatCurrency(item.price)} = ${formatCurrency(item.total)}\n`;
+                    });
                 }
+                
+                const message = `СМЕТА № ${estimateNumber}
+PotolokForLife - Натяжные потолки на всю жизнь
+
+1. ОБЩИЕ СВЕДЕНИЯ
+Дата: ${now.toLocaleDateString('ru-RU')}
+Заказчик: Физическое лицо
+Исполнитель: PotolokForLife
+
+2. ХАРАКТЕРИСТИКИ ОБЪЕКТА
+Адрес: ${address}
+Площадь: ${area} м²
+Система: ${systemsData[currentSystem]?.name || 'Гарпунная'}
+
+3. ПЕРЕЧЕНЬ РАБОТ И МАТЕРИАЛОВ
+${itemsDetails || 'Нет данных'}
+
+4. ИТОГО
+Общая стоимость: ${formatCurrency(total)}
+Предоплата (50%): ${formatCurrency(total * 0.5)}
+Окончательный расчет (50%): ${formatCurrency(total * 0.5)}
+
+5. КОНТАКТНАЯ ИНФОРМАЦИЯ
+Телефон: 8(977)531-10-99
+Email: Potolokforlife@yandex.ru
+Адрес: г. Пушкино
+
+УСЛОВИЯ:
+• Гарантия на работы: 5 лет
+• Гарантия на материалы: 10 лет
+• Срок выполнения: 3-5 рабочих дней
+• Смета действительна: 30 дней
+
+Для подтверждения заказа свяжитесь с нами.`;
+                
+                // УНИВЕРСАЛЬНЫЙ ШАРИНГ ДЛЯ TELEGRAM
+                const url = `https://t.me/share/url?url=${encodeURIComponent('https://potolokforlife.ru')}&text=${encodeURIComponent(message)}`;
+                
+                // Если в Telegram Web App, используем их метод для открытия
+                if (tg && tg.openLink) {
+                    tg.openLink(url);
+                } else {
+                    // В обычном браузере открываем в новом окне
+                    window.open(url, '_blank');
+                }
+                
+                showToast('📲 Открываю Telegram...');
                 
             } catch (error) {
                 console.error('Ошибка Telegram:', error);
-                showToast('❌ Ошибка отправки');
+                // Резервный вариант - копирование в буфер
+                try {
+                    const simpleMessage = `Смета на потолки: ${formatCurrency(total)}. Адрес: ${address}. Тел: 8(977)531-10-99`;
+                    navigator.clipboard.writeText(simpleMessage);
+                    showToast('✅ Данные скопированы! Вставьте в Telegram');
+                } catch (clipboardError) {
+                    showToast('📞 Позвоните нам: 8(977)531-10-99');
+                }
             }
         }
 
@@ -1312,6 +1715,7 @@
                     
                     loadServices();
                     calculateEstimate();
+                    updateDocumentPreview();
                     
                     showToast('Данные сброшены');
                 }
