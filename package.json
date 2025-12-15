@@ -1,17 +1,33 @@
 {
-  "name": "potolok-telegram-bot",
+  "name": "potolok-bot",
   "version": "1.0.0",
-  "description": "Telegram бот для расчета натяжных потолков",
-  "main": "bot.js",
+  "description": "Telegram bot for ceiling estimates calculator",
+  "main": "bot-server.js",
   "scripts": {
-    "start": "node bot.js",
-    "dev": "nodemon bot.js"
+    "start": "node bot-server.js",
+    "dev": "nodemon bot-server.js",
+    "deploy": "git push heroku main"
   },
   "dependencies": {
-    "telegraf": "^4.12.2",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "node-telegram-bot-api": "^0.61.0",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
-  }
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "estimates",
+    "calculator",
+    "ceiling"
+  ],
+  "author": "PotolokForLife",
+  "license": "MIT"
 }
