@@ -2,335 +2,149 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PotolokForLife - Калькулятор натяжных потолков</title>
-    <meta name="description" content="Профессиональный калькулятор смет на натяжные потолки">
-    
-    <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e3c72">
-    <link rel="icon" href="icon.png" type="image/png">
-    
-    <!-- Telegram Web App -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Библиотеки (используем CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Локальные стили -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор Потолков</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Калькулятор для расчета стоимости натяжных потолков">
 </head>
 <body>
     <div class="container">
-        <!-- Загрузочный экран -->
-        <div class="loading-overlay" id="loadingOverlay">
-            <div class="loading-spinner"></div>
-            <div id="loadingText">Загрузка...</div>
-        </div>
-        
-        <div class="telegram-status" id="telegramStatus">
-            <i class="fab fa-telegram"></i> Открыто в Telegram
-        </div>
-        
-        <header class="header">
-            <div class="logo">
-                <h1><i class="fas fa-home"></i> PotolokForLife</h1>
-                <p>Натяжные потолки на всю жизнь</p>
-            </div>
-            <div class="contact-info">
-                <div class="contact-item">
-                    <i class="fas fa-envelope"></i>
-                    <span>Potolokforlife@yandex.ru</span>
-                </div>
-                <div class="contact-item">
-                    <i class="fas fa-phone"></i>
-                    <span>8(977)531-10-99</span>
-                </div>
-                <div class="contact-item">
-                    <i class="fas fa-map-marker-alt"></i>
-                    <span>Пушкино</span>
-                </div>
-            </div>
+        <header>
+            <h1>🏠 Калькулятор Потолков</h1>
+            <p>Быстрый расчет стоимости установки</p>
         </header>
-        
-        <nav class="mobile-nav">
-            <button class="nav-tab active" data-tab="parameters">
-                <i class="fas fa-ruler-combined"></i> Параметры
-            </button>
-            <button class="nav-tab" data-tab="services">
-                <i class="fas fa-tools"></i> Услуги
-            </button>
-            <button class="nav-tab" data-tab="results">
-                <i class="fas fa-calculator"></i> Расчет
-            </button>
-            <button class="nav-tab" data-tab="history">
-                <i class="fas fa-history"></i> История
-            </button>
-        </nav>
-        
-        <!-- Вкладка параметров -->
-        <main class="tab-content active" id="parameters-tab">
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-info-circle"></i> Информация об объекте</h2>
+
+        <!-- Экран калькулятора -->
+        <div id="calculator-screen" class="screen active">
+            <div class="card">
+                <h2>Рассчитать стоимость</h2>
                 
-                <div class="object-info">
-                    <div class="input-group">
-                        <label for="objectType">Тип объекта</label>
-                        <select id="objectType">
-                            <option value="квартира">Квартира</option>
-                            <option value="дом">Частный дом</option>
-                            <option value="офис">Офис</option>
-                            <option value="магазин">Магазин</option>
-                        </select>
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="roomCount">Количество помещений</label>
-                        <input type="number" id="roomCount" value="1" min="1">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="objectAddress">Адрес объекта</label>
-                        <input type="text" id="objectAddress" placeholder="Введите адрес">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="clientName">Имя клиента</label>
-                        <input type="text" id="clientName" placeholder="ФИО клиента">
-                    </div>
-                    
-                    <div class="input-group">
-                        <label for="clientPhone">Телефон клиента</label>
-                        <input type="tel" id="clientPhone" placeholder="+7 (XXX) XXX-XX-XX">
-                    </div>
+                <div class="form-group">
+                    <label for="area">Площадь комнаты (м²)</label>
+                    <input type="number" id="area" placeholder="Введите площадь" min="1" step="0.1">
                 </div>
-                
-                <h2 class="card-title"><i class="fas fa-cog"></i> Система потолка</h2>
-                <div class="system-selector">
-                    <button class="system-btn active" data-system="garpun" aria-label="Гарпунная система">Гарпун</button>
-                    <button class="system-btn" data-system="garpun10" aria-label="Гарпунная система +10%">Гарпун +10%</button>
-                </div>
-                
-                <h2 class="card-title"><i class="fas fa-cube"></i> Основные параметры</h2>
-                <div class="input-row">
-                    <div class="input-group">
-                        <label for="area"><i class="fas fa-square"></i> Площадь (S)</label>
-                        <input type="number" id="area" value="0" min="0" step="0.01" placeholder="м²">
-                    </div>
-                    <div class="input-group">
-                        <label for="perimeter"><i class="fas fa-ruler"></i> Периметр (P)</label>
-                        <input type="number" id="perimeter" value="0" min="0" step="0.01" placeholder="м.п.">
-                    </div>
-                </div>
-                
-                <div class="input-group">
-                    <label for="height"><i class="fas fa-arrows-alt-v"></i> Высота (h)</label>
-                    <input type="number" id="height" value="0" min="0" step="0.01" placeholder="м">
-                </div>
-                
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="calculateBtn">
-                        <i class="fas fa-calculator"></i> Рассчитать смету
-                    </button>
-                    
-                    <div class="btn-row">
-                        <button class="btn btn-secondary" id="resetBtn">
-                            <i class="fas fa-redo"></i> Сбросить
-                        </button>
-                        <button class="btn btn-success" id="saveBtn">
-                            <i class="fas fa-save"></i> Сохранить
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </main>
-        
-        <!-- Вкладка услуг -->
-        <main class="tab-content" id="services-tab">
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-tools"></i> Основные работы</h2>
-                <div class="services-list" id="basicServicesList" role="list">
-                    <!-- Динамически загружается -->
-                </div>
-                
-                <h2 class="card-title"><i class="fas fa-lightbulb"></i> Освещение</h2>
-                <div class="services-list" id="lightingServicesList" role="list">
-                    <!-- Динамически загружается -->
-                </div>
-                
-                <h2 class="card-title"><i class="fas fa-plus-circle"></i> Дополнительные работы</h2>
-                <div class="services-list" id="additionalServicesList" role="list">
-                    <!-- Динамически загружается -->
-                </div>
-                
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="calculateBtn2">
-                        <i class="fas fa-calculator"></i> Рассчитать смету
-                    </button>
-                    
-                    <div class="btn-row">
-                        <button class="btn btn-secondary" id="resetBtn2">
-                            <i class="fas fa-redo"></i> Сбросить
-                        </button>
-                        <button class="btn btn-success" id="saveBtn2">
-                            <i class="fas fa-save"></i> Сохранить
-                        </button>
-                    </div>
-                </div>
-            </section>
-        </main>
-        
-        <!-- Вкладка результатов -->
-        <main class="tab-content" id="results-tab">
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-calculator"></i> Сводка по стоимости</h2>
-                
-                <div class="results">
-                    <div class="result-box">
-                        <div class="result-label">Материалы</div>
-                        <div class="result-value" id="materialsCost">0 руб.</div>
-                    </div>
-                    <div class="result-box">
-                        <div class="result-label">Работы</div>
-                        <div class="result-value" id="workCost">0 руб.</div>
-                    </div>
-                    <div class="result-box">
-                        <div class="result-label">Итого</div>
-                        <div class="result-value" id="totalCost">0 руб.</div>
-                    </div>
-                </div>
-                
-                <div class="payment-info">
-                    <h3><i class="fas fa-credit-card"></i> Порядок оплаты</h3>
-                    <ul>
-                        <li>Предоплата <span class="highlight" id="prepaymentAmount">0 руб.</span> (50%) за 3 дня до монтажа</li>
-                        <li>Окончательный расчет <span class="highlight" id="finalPaymentAmount">0 руб.</span> (50%) в день завершения работ</li>
-                    </ul>
-                </div>
-                
-                <h2 class="card-title"><i class="fas fa-list-alt"></i> Детализация сметы</h2>
-                <div class="summary-table-container">
-                    <table class="summary-table" id="summaryTable">
-                        <thead>
-                            <tr>
-                                <th>Наименование</th>
-                                <th>Кол-во</th>
-                                <th>Цена</th>
-                                <th>Сумма</th>
-                            </tr>
-                        </thead>
-                        <tbody id="summaryTableBody">
-                            <tr>
-                                <td colspan="4" class="empty-state">
-                                    <i class="fas fa-clipboard-list"></i>
-                                    <p>Добавьте элементы для расчета</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <h2 class="card-title"><i class="fas fa-share-alt"></i> Экспорт и отправка</h2>
-                
-                <div class="export-options">
-                    <button class="export-btn pdf" id="exportPdfBtn">
-                        <i class="fas fa-file-pdf"></i>
-                        <div>
-                            <div>Скачать PDF</div>
-                            <small>Для печати</small>
+
+                <div class="form-group">
+                    <label>Тип потолка</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="matte" name="ceiling-type" value="matte">
+                            <label for="matte">Матовый</label>
+                            <span class="price">500 ₽/м²</span>
                         </div>
-                    </button>
-                    
-                    <button class="export-btn image" id="exportImageBtn">
-                        <i class="fas fa-image"></i>
-                        <div>
-                            <div>Скачать изображение</div>
-                            <small>PNG формат</small>
+                        <div class="radio-option">
+                            <input type="radio" id="glossy" name="ceiling-type" value="glossy">
+                            <label for="glossy">Глянцевый</label>
+                            <span class="price">600 ₽/м²</span>
                         </div>
-                    </button>
-                    
-                    <button class="export-btn telegram" id="exportTelegramBtn">
-                        <i class="fab fa-telegram"></i>
-                        <div>
-                            <div>Поделиться в Telegram</div>
-                            <small>Отправить смету</small>
+                        <div class="radio-option">
+                            <input type="radio" id="satin" name="ceiling-type" value="satin">
+                            <label for="satin">Сатиновый</label>
+                            <span class="price">550 ₽/м²</span>
                         </div>
-                    </button>
-                    
-                    <button class="export-btn whatsapp" id="exportWhatsappBtn">
-                        <i class="fab fa-whatsapp"></i>
-                        <div>
-                            <div>Поделиться в WhatsApp</div>
-                            <small>Отправить клиенту</small>
-                        </div>
-                    </button>
-                </div>
-                
-                <div class="action-buttons">
-                    <button class="btn btn-primary" id="calculateBtn3">
-                        <i class="fas fa-calculator"></i> Пересчитать
-                    </button>
-                    
-                    <div class="btn-row">
-                        <button class="btn btn-secondary" id="resetBtn3">
-                            <i class="fas fa-redo"></i> Сбросить
-                        </button>
-                        <button class="btn btn-success" id="saveBtn3">
-                            <i class="fas fa-save"></i> Сохранить
-                        </button>
                     </div>
                 </div>
-            </section>
-        </main>
-        
-        <!-- Вкладка истории -->
-        <main class="tab-content" id="history-tab">
-            <section class="card">
-                <h2 class="card-title"><i class="fas fa-history"></i> История смет</h2>
-                
-                <div class="history-controls">
-                    <button class="btn btn-secondary" id="refreshHistoryBtn">
-                        <i class="fas fa-sync"></i> Обновить
-                    </button>
-                    <button class="btn btn-danger" id="clearHistoryBtn">
-                        <i class="fas fa-trash"></i> Очистить
-                    </button>
+
+                <button id="calculate-btn" class="btn btn-primary">Рассчитать</button>
+
+                <div id="result"></div>
+            </div>
+        </div>
+
+        <!-- Экран прайс-листа -->
+        <div id="prices-screen" class="screen">
+            <div class="card">
+                <h2>💰 Прайс-лист</h2>
+                <ul class="price-list">
+                    <li>
+                        <span class="type">Матовый потолок</span>
+                        <span class="price">500 ₽/м²</span>
+                    </li>
+                    <li>
+                        <span class="type">Глянцевый потолок</span>
+                        <span class="price">600 ₽/м²</span>
+                    </li>
+                    <li>
+                        <span class="type">Сатиновый потолок</span>
+                        <span class="price">550 ₽/м²</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>📋 Что входит в стоимость</h2>
+                <ul style="padding-left: 20px; line-height: 1.8;">
+                    <li>Материал (полотно)</li>
+                    <li>Монтаж и установка</li>
+                    <li>Багет и крепления</li>
+                    <li>Вывод под люстру</li>
+                    <li>Гарантия 5 лет</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Экран контактов -->
+        <div id="contacts-screen" class="screen">
+            <div class="card">
+                <h2>📞 Контакты</h2>
+                <div class="contact-info">
+                    <a href="tel:+79123456789" class="contact-item">
+                        <div class="icon">📱</div>
+                        <div class="info">
+                            <div class="label">Телефон</div>
+                            <div class="value">+7 (912) 345-67-89</div>
+                        </div>
+                    </a>
+
+                    <a href="mailto:info@potolok.ru" class="contact-item">
+                        <div class="icon">✉️</div>
+                        <div class="info">
+                            <div class="label">Email</div>
+                            <div class="value">info@potolok.ru</div>
+                        </div>
+                    </a>
+
+                    <a href="https://t.me/potolok_bot" class="contact-item" target="_blank">
+                        <div class="icon">💬</div>
+                        <div class="info">
+                            <div class="label">Telegram</div>
+                            <div class="value">@potolok_bot</div>
+                        </div>
+                    </a>
                 </div>
-                
-                <div class="history-list" id="historyList" role="list">
-                    <div class="empty-state">
-                        <i class="fas fa-history"></i>
-                        <p>История пуста</p>
-                    </div>
-                </div>
-            </section>
-        </main>
-        
-        <!-- Скрытый контейнер для экспорта -->
-        <div class="export-container" id="exportContainer" aria-hidden="true"></div>
-        
-        <!-- Уведомления -->
-        <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+            </div>
+
+            <div class="card">
+                <h2>🕐 Режим работы</h2>
+                <p style="color: #666; line-height: 1.8;">
+                    Понедельник - Пятница: 9:00 - 18:00<br>
+                    Суббота: 10:00 - 16:00<br>
+                    Воскресенье: выходной
+                </p>
+            </div>
+        </div>
     </div>
 
-    <!-- Локальный JavaScript -->
+    <!-- Нижняя навигация -->
+    <nav class="bottom-nav">
+        <div class="nav-container">
+            <button class="nav-btn active" data-screen="calculator">
+                <div class="icon">🧮</div>
+                <div class="label">Калькулятор</div>
+            </button>
+            <button class="nav-btn" data-screen="prices">
+                <div class="icon">💰</div>
+                <div class="label">Цены</div>
+            </button>
+            <button class="nav-btn" data-screen="contacts">
+                <div class="icon">📞</div>
+                <div class="label">Контакты</div>
+            </button>
+        </div>
+    </nav>
+
     <script src="script.js"></script>
-    
-    <!-- Service Worker для PWA -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registered:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('ServiceWorker registration failed:', error);
-                    });
-            });
-        }
-    </script>
 </body>
 </html>
